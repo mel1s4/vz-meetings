@@ -4,7 +4,22 @@ import './index.scss';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('vz-calendar'));
+
+// function rendertVzCalendarWindows() {
+//   const calendars = document.querySelectorAll('.vz-calendar');
+//   calendars.forEach((calendar) => {
+//     const calendar_id = calendar.getAttribute('data-vz-calendar-id');
+//     id = 'vz_calendar_' + calendar_id;
+//     root.render(
+//       <React.StrictMode>
+//         <App id={id} />
+//       </React.StrictMode>
+//     );
+//   });
+
+//   }
+
 root.render(
   <React.StrictMode>
     <App />

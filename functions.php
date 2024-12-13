@@ -9,45 +9,23 @@ Author URI: https://melisaviroz.com
 License: GPL2
 */
 
-function add_cors_http_header() {
-  header("Access-Control-Allow-Origin: *");
-  header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE, PUT");
-  header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization");
-}
-
-add_action('init', 'add_cors_http_header');
-
 if (!defined('ABSPATH')) {
   die;
 }
 
-if (!function_exists('print_x')) {
-  function print_x($x) {
-    echo '<pre>';
-    print_r($x);
-    echo '</pre>';
-  }
+add_action('init', 'vz_am_load_init_file');
+function vz_am_load_init_file() {
+  include 'init.php';
 }
 
-function vz_html($tag, $text) {
-  $txt = __($text, 'vz-am');
-  echo "<$tag>$txt</$tag>";
-}
+include 'viroz_helpers.php';
+include 'api_calls.php';
+include 'calendar-block/calendar-block.php';
 
-function e_vz($text) {
-  echo __vz($text);
-}
-
-function __vz($text) {
-  return __($text, 'vz-am');
-}
 
 add_action('admin_enqueue_scripts', 'vz_am_enqueue_styles');
 function vz_am_enqueue_styles() {
   wp_enqueue_style('vz-am-styles', plugin_dir_url(__FILE__) . 'style.css');  
-  
-  // if the current page is edit post vz-calendar 
-  // editing post tyle = vz-calendar
   if (get_current_screen()->post_type === 'vz-calendar') {
     wp_enqueue_style('vz-availability-rules-styles', plugin_dir_url(__FILE__) . 'availability-rules/build/static/css/main.css', array(), '1.0.0', 'all');
     wp_enqueue_script('vz-availability-rules', plugin_dir_url(__FILE__) . 'availability-rules/build/static/js/main.js' , array('wp-element'), '0.0.1', true);
@@ -59,7 +37,6 @@ function vz_am_enqueue_styles() {
     wp_localize_script('vz-availability-rules', 'vz_availability_rules_params', $params);
   }
 }
-
 
 // create settings page with a single text input field
 add_action('admin_menu', 'vz_am_settings_page');
@@ -95,46 +72,26 @@ function vz_am_calendar_page_content() {
   echo '<h1>' . __vz("Calendar") . '</h1>';
 }
 
-// create a post type called "calendar"
-add_action('init', 'vz_am_calendar_post_type');
-
-function vz_am_calendar_post_type() {
-  register_post_type('vz-calendar', array(
-    'labels' => array(
-      'name' => __vz('My Calendars'),
-      'singular_name' => __vz('Calendar'),
-    ),
-    'public' => true,
-    'has_archive' => false,
-    'show_ui' => true,	
-    'show_in_menu' => 'vz_am_settings',
-    'supports' => array('title'),
-  ));
+add_action('wp_enqueue_scripts', 'vz_am_enqueue_calendar_scripts');
+function vz_am_enqueue_calendar_scripts() {
+  global $post;
+  // if is single vz-calendar post
+  if (is_single() && $post->post_type === 'vz-calendar') {
+    wp_enqueue_style('vz-calendar-view-styles', plugin_dir_url(__FILE__) . 'calendar-view/build/static/css/main.css', array(), '1.0.0', 'all');
+    wp_enqueue_script('vz-calendar-view', plugin_dir_url(__FILE__) . 'calendar-view/build/static/js/main.js' , array('wp-element'), '0.0.1', true);
+    $params = [
+      'availability_rules' => JSON_decode(get_post_meta(get_the_ID(), 'vz_availability_rules', true)),
+      'time_zone' => get_option('timezone_string'),
+      'calendar_id' => get_the_ID(),
+      'rest_nonce' => wp_create_nonce('wp_rest'),
+      'rest_url' => get_rest_url(),
+      'slot_size' => get_post_meta(get_the_ID(), 'vz_am_duration', true),
+      'availability' => vzGetAvailability(get_the_ID()),
+    ];
+    wp_localize_script('vz-calendar-view', 'vz_calendar_view_params', $params);
+  }
 }
 
-// create a shotcode to display the calendar send a prop to select the calendar by id
-add_shortcode('vz_calendar', 'vz_am_calendar_shortcode');
-function vz_am_calendar_shortcode($atts) {
-  wp_enqueue_style('vz-calendar-view-styles', plugin_dir_url(__FILE__) . 'calendar-view/build/static/css/main.css', array(), '1.0.0', 'all');
-  wp_enqueue_script('vz-calendar-view', plugin_dir_url(__FILE__) . 'calendar-view/build/static/js/main.js' , array('wp-element'), '0.0.1', true);
-  $params = [
-    'availability_rules' => JSON_decode(get_post_meta(get_the_ID(), 'vz_availability_rules', true)),
-    'time_zone' => get_option('timezone_string'),
-  ];
-  wp_localize_script('vz-calendar-view', 'vz_availability_rules_params', $params);
-
-  $atts = shortcode_atts(array(
-    'id' => null,
-  ), $atts);
-  ob_start();
-  $calendar = get_post($atts['id']);
-  include 'vz-calendar.php';
-  return ob_get_clean();
-}
-
-
-// add options to calendar post type where the user can select thew minimup appointment size in minutes
-add_action('add_meta_boxes', 'vz_am_calendar_options');
 function vz_am_calendar_options() {
   add_meta_box(
     'vz_am_calendar_options',
@@ -155,6 +112,10 @@ function vz_am_calendar_options() {
     'default'
   );
 }
+add_action(
+  'add_meta_boxes', 
+  'vz_am_calendar_options'
+);
 
 function vz_am_availability_options_content($post) {
   ?>
@@ -196,18 +157,6 @@ function vz_am_save_calendar_options($post_id) {
       'vz_availability_rules',
       $_POST['vz-appointments-availability-rules']
     );
-  }
-}
-
-
-// add options to product post type if woocommerce is active
-add_action('init', 'vz_am_add_product_options');
-function vz_am_add_product_options() {
-  if (class_exists('WooCommerce')) {
-    add_action('woocommerce_product_options_general_product_data', 'vz_am_product_options');
-    add_action('woocommerce_process_product_meta', 'vz_am_save_product_options');
-  } else {
-    add_action('admin_notices', 'vz_am_woocommerce_not_active');
   }
 }
 
@@ -263,106 +212,4 @@ function vz_am_save_product_options($post_id) {
   update_post_meta($post_id, 'vz_am_allow_multiple_appointments', $allow_multiple_appointments);
   $calendar = $_POST['vz_am_calendar'];
   update_post_meta($post_id, 'vz_am_calendar', $calendar);
-}
-
-// create an endpoint to check the availability days of a month
-add_action('rest_api_init', 'vz_am_register_rest_routes');
-function vz_am_register_rest_routes() { 
-  register_rest_route('vz-am/v1', '/availability', array(
-    'methods' => 'GET',
-    'callback' => 'vz_am_get_availability',
-  ));
-}
-
-function vz_am_get_days_of_month($month, $year) {
-  $days = [];
-  $first_day = new DateTime("$year-$month-01");
-  $last_day = new DateTime("$year-$month-" . $first_day->format('t'));
-  $interval = new DateInterval('P1D');
-  $period = new DatePeriod($first_day, $interval, $last_day);
-  foreach ($period as $day) {
-    $days[] = $day;
-  }
-  return $days;
-}
-
-function vz_am_get_availability($request) {
-  $month = $request->get_param('month');
-  $year = $request->get_param('year');
-  $calendar_id = $request->get_param('calendar_id');
-  $calendar = get_post($calendar_id);
-  $availability_rules = JSON_decode(get_post_meta($calendar_id, 'vz_availability_rules', true));
-  // sort the rules by id
-  usort($availability_rules, function($a, $b) {
-    return $a->id - $b->id;
-  });
-  $days = vz_am_get_days_of_month($month, $year);
-  $available_days = [];
-
-  /* 
-  Rule structure: 
-    "id": 1, // position in array
-    "name": "New Rule", 
-    "type": "between-dates",
-    "action": "unavailable", unavailable or available
-    "includeTime": false,
-    "startTime": "00:00",
-    "endTime": "23:59",
-    "weekdays": [],
-    "specificDate": "",
-    "startDate": "",
-    "endDate": "",
-    "showWeekdays": false
-  */
-
-  foreach ($availability_rules as $rule) {
-    $available = $rule->action === 'available';
-    if ($rule->type === 'specific-date') {
-      $rule_date = new DateTime($rule->specificDate);
-      if ($rule_date->format('m') == $month) {
-        $available_days[$rule_date->format('d')] = $available;
-      }
-    }
-    if ($rule->type === 'between-dates') {
-      $rule_start_date = new DateTime($rule->startDate);
-      $rule_end_date = new DateTime($rule->endDate);
-      $month_start_date = new DateTime("$year-$month-01");
-      $month_end_date = new DateTime("$year-$month-" . $month_start_date->format('t'));
-      $start_date = $rule_start_date > $month_start_date ? $rule_start_date : $month_start_date;
-      $end_date = $rule_end_date < $month_end_date ? $rule_end_date : $month_end_date;
-      $interval = new DateInterval('P1D');
-      $period = new DatePeriod($start_date, $interval, $end_date);
-      foreach ($period as $day) {
-        if ($rule->showWeekdays) {
-          $week_day = $day->format('N');
-          if (in_array($week_day, $rule->weekdays)) {
-            $available_days[$day->format('d')] = $available;
-          }
-        } else {
-          $available_days[$day->format('d')] = $available;
-        }
-      }
-    }
-    if ($rule->type === 'every-week') {
-      $start_date = new DateTime("$year-$month-01");
-      $end_date = new DateTime("$year-$month-" . $start_date->format('t'));
-      $interval = new DateInterval('P1W');
-      $period = new DatePeriod($start_date, $interval, $end_date);
-      foreach ($period as $day) {
-        $week_day = $day->format('N');
-        if (in_array($week_day, $rule->weekdays)) {
-          $available_days[$day->format('d')] = $available;
-        }
-      }
-    }
-  }
-  // sort the days by key
-  ksort($available_days);
-
-  return rest_ensure_response( [
-    'available_days' => $available_days,
-    'availability_rules' => $availability_rules,
-    'calendar_id' => $calendar_id,
-    ] );
-  // the endpoint would be called like this: /wp-json/vz-am/v1/availability?month=1&year=2021&calendar_id=1
 }

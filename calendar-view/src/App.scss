@@ -94,7 +94,7 @@
   } 
   &.--available {
     .day-button {
-      background-color: rgba(#00bbee, 0.5);
+      background-color: #aaeeff;
       color: white;
       color: #059;
       font-weight: bold;
@@ -105,6 +105,8 @@
     .day-button {
       background-color: #059;
       color: white;
+      transition: all 0.3s;
+      
     }
   }
   &.--istoday {
@@ -127,6 +129,7 @@
 .vz-am__time-slots__item {
   margin: 0;
   button {
+    transition: all 0.3s;
     font-size: 1rem;
     padding: 0.5em 1em;
     border: none;

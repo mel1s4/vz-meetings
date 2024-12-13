@@ -9,15 +9,17 @@ function App() {
   // const currentYear = today.getFullYear();
   // const currentDay = today.getDate();
   // const currentDayOfWeek = today.getDay();
+  const [timeSlotSize, setTimeSlotSize] = useState(30);
   const [calendarId, setCalendarId] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null);
   const Months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const [monthAvailability, setMonthAvailability] = useState([]);
-  const [timeSlots, setTimeSlots] = useState([]);
+  const [timeSlots, setTimeSlots] = useState({});
+  const [timeZone, setTimeZone] = useState(null);
+  const [restUrl, setRestUrl] = useState('http://localhost/wp-json/');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   useEffect(() => {
     const today = new Date();
@@ -26,47 +28,70 @@ function App() {
     setSelectedDay(formatDate(today));
     setSelectedMonth(today.getMonth());
     setSelectedYear(today.getFullYear());
-    const exampleTimeSlots = [
-      {
-        start: '09:00',
-        end: '10:00',
-      },
-      {
-        start: '11:00',
-        end: '13:00',
-      },
-      {
-        start: '14:00',
-        end: '15:00',
-      },
-      {
-        start: '16:00',
-        end: '17:00',
-      },
-      {
-        start: '18:00',
-        end: '19:00',
-      },
-    ];
+    const exampleTimeSlots = {
+      '11:00': true,
+      '11:48': true,
+      '12:36': true,
+      '13:24': true,
+      '14:12': true,
+      '15:00': true,
+      '15:48': true,
+      '16:36': true,
+    };
     setTimeSlots(exampleTimeSlots);
+    console.log(window?.vz_calendar_view_params);
 
-    console.log(window?.calendar_params);
+    if (window?.vz_calendar_view_params) {
+      const { calendar_id, rest_url, time_zone, availability, slot_size } = window.vz_calendar_view_params;
+      setCalendarId(calendar_id);
+      setRestUrl(rest_url);
+      setTimeZone(time_zone);
+      setTimeSlotSize(slot_size);
+
+      const nmA = {};
+      nmA[today.getFullYear() + '-' + (today.getMonth() + 1)] = availability?.available_days;
+      setMonthAvailability(nmA);
+      setTimeSlots(availability?.timeslots);
+
+    }
   }, []);
 
   function selectedDateFormatted() {
     if (selectedDay) {
-      const [year, month, date] = selectedDay.split('-');
+      const [y, month, date] = selectedDay.split('-');
       return `${Months[parseInt(month) - 1].slice(0,3)} ${parseInt(date)}`;
     }
     return
   }
 
+  
   useEffect(() => {
-    if (selectedMonth && selectedYear) {
+    if (selectedMonth >= 0 && selectedYear > 2000 && restUrl ) {
       getMonthAvailability(selectedMonth + 1, selectedYear);
     }
+  }, [selectedMonth, selectedYear, restUrl]);
+
+  useEffect(() => {
+    if (selectedDay && calendarId) {
+      getTimeSlots(selectedDay);
+    }
   }
-  , [selectedMonth, selectedYear]);
+  , [selectedDay]);
+
+  async function getTimeSlots(day) {
+    try {
+      const getParams = {
+        month: selectedMonth + 1,
+        year: selectedYear,
+        day: day,
+        calendar_id: calendarId
+      };
+      const response = await axios.get( restUrl + 'vz-am/v1/timeslots', { params: getParams });
+      setTimeSlots(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   async function getMonthAvailability() {
     if (monthAvailability[selectedYear + '-' + (selectedMonth + 1)]) {
@@ -79,8 +104,7 @@ function App() {
         calendar_id: calendarId
       };
       console.log(selectedYear);
-      const domain = 'http://localhost';
-      const response = await axios.get( domain + '/wp-json/vz-am/v1/availability', { params: getParams });
+      const response = await axios.get( restUrl + 'vz-am/v1/availability', { params: getParams });
       const newMonthAvailability = { ...monthAvailability };
       newMonthAvailability[selectedYear + '-' + (selectedMonth + 1)] = response.data.available_days;
       setMonthAvailability(newMonthAvailability);
@@ -198,15 +222,13 @@ function App() {
         <h2 className="title">{selectedDateFormatted()}</h2>
         <ul className="vz-am__time-slots__list">
             {
-              timeSlots.map((timeSlot, index) => (
-                <li className="vz-am__time-slots__item">
-                  <button key={index} 
-                          onClick={(e) => selectTimeSlot(e, index)}
-                          className={`vz-am__time-slots__button ${
-                              selectedTimeSlot === index ? '--selected' : ''
-                          }`}
-                          >
-                    {timeSlot.start}
+              Object.keys(timeSlots).map((timeSlot, index) => (
+                <li key={index} className="vz-am__time-slots__item">
+                  <button
+                    onClick={(e) => selectTimeSlot(e, index)}
+                    className={`vz-am__time-slot__button ${index === selectedTimeSlot ? '--selected' : ''}`}
+                  >
+                    {timeSlot}
                   </button>
                 </li>
               ))
