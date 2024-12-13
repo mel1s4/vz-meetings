@@ -1,19 +1,148 @@
 .vz-time-slot-selection {
+  display: flex;
+  gap: 2em;
+  flex-wrap: wrap;
   * {
     box-sizing: border-box;
     font-family: sans-serif;
   }
 }
 
+.title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  width: stretch;
+  color: #333;
+  margin: 0.5em 0;
+  padding: 0.5em 0;
+}
+
+.vz-availability-calendar {
+  width: min-content;
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .vz-calendar-nav__button {
+      background-color: transparent;
+      border: none;
+      color: #666;
+      font-size: 1rem;
+      cursor: pointer;
+      position: relative;
+
+      &:before {
+        top: 50%;
+        position: absolute;
+        display: block;
+        width: 2em;
+        height: 2em;
+        content: "";
+        transform: translate(-50%, -50%);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z'/%3E%3C/svg%3E");
+      }
+      &.--prev {
+        padding-left: 1em;
+        &:before {
+          left: 0;
+        }
+      }
+      &.--next {
+        padding-right: 1em;
+        &:before {
+          right: 0px;
+          transform: translate(50%, -50%) rotate(180deg);
+        }
+      }
+    }
+  }
+}
+
 .month {
+  width: fit-content;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  grid-gap: 0.5em;
 }
 
 .day {
+  width: min-content;
+  &.--header {
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #333;
+    letter-spacing: 0.05em;
+    font-size: 0.8rem;
+  }
+  .day-button {
+    font-size: 1rem;
+    width: 3em;
+    height: 3em;
+    border-radius: 1.5em;
+    padding: 0.5em;
+    border: none;
+    color: #666;
+
+  }
+
+  &.--unavailable {
+    .day-button {
+      background-color: transparent;
+      pointer-events: none;
+    }
+  } 
+  &.--available {
+    .day-button {
+      background-color: rgba(#00bbee, 0.5);
+      color: white;
+      color: #059;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  } 
   &.--selected {
-    button {
-      background-color: #f00;
+    .day-button {
+      background-color: #059;
+      color: white;
+    }
+  }
+  &.--istoday {
+    .day-button {
+      border: 2px solid #059;
+    }
+  }
+  
+}
+
+.vz-am__time-slots__list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  width: min-content;
+  gap: 0.5em;
+}
+
+.vz-am__time-slots__item {
+  margin: 0;
+  button {
+    font-size: 1rem;
+    padding: 0.5em 1em;
+    border: none;
+    border-radius: 1.5em;
+    background-color: transparent;
+    color: #333;
+    border: 1px solid #00bbee;
+    cursor: pointer;
+    font-weight: bold;
+    &:hover {
+      background-color: #00bbee;
+      color: white;
+    }
+    &.--selected {
+      background-color: #CCEEFF;
+      color: #059;
     }
   }
 }

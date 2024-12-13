@@ -18,7 +18,7 @@ function App() {
     showWeekdays: false,
   };
   const [availabilityRules, setAvailabilityRules] = useState([]);
-  const weekdaysTemplate = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const weekdaysTemplate = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const ruleTypes = [
     {
       name: "On a Week Day",

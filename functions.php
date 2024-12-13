@@ -9,6 +9,14 @@ Author URI: https://melisaviroz.com
 License: GPL2
 */
 
+function add_cors_http_header() {
+  header("Access-Control-Allow-Origin: *");
+  header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE, PUT");
+  header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization");
+}
+
+add_action('init', 'add_cors_http_header');
+
 if (!defined('ABSPATH')) {
   die;
 }
@@ -46,6 +54,7 @@ function vz_am_enqueue_styles() {
     $params = [
       'availability_rules' => JSON_decode(get_post_meta(get_the_ID(), 'vz_availability_rules', true)),
       'time_zone' => get_option('timezone_string'),
+      'endpoint_domain' => get_rest_url(),
     ];
     wp_localize_script('vz-availability-rules', 'vz_availability_rules_params', $params);
   }
@@ -351,9 +360,9 @@ function vz_am_get_availability($request) {
   ksort($available_days);
 
   return rest_ensure_response( [
-    $available_days,
-    $availability_rules,
-    $calendar_id,
+    'available_days' => $available_days,
+    'availability_rules' => $availability_rules,
+    'calendar_id' => $calendar_id,
     ] );
   // the endpoint would be called like this: /wp-json/vz-am/v1/availability?month=1&year=2021&calendar_id=1
 }
