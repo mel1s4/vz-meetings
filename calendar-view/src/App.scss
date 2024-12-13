@@ -1,0 +1,19 @@
+.vz-time-slot-selection {
+  * {
+    box-sizing: border-box;
+    font-family: sans-serif;
+  }
+}
+
+.month {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.day {
+  &.--selected {
+    button {
+      background-color: #f00;
+    }
+  }
+}
