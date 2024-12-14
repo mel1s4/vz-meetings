@@ -1,1 +1,436 @@
-.wp-block-create-block-calendar-block{border:1px dotted red}
+/*!****************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/editor.scss ***!
+  \****************************************************************************************************************************************************************************************************************************************/
+
+/*!****************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!../calendar-view/src/App.scss ***!
+  \****************************************************************************************************************************************************************************************************************************************************/
+.--vz-is-preview {
+  pointer-events: none;
+}
+
+.vz-time-slot-selection {
+  font-size: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  width: -webkit-fit-content;
+  width: fit-content;
+  gap: 1em;
+  max-width: 40em;
+  position: relative;
+}
+.vz-time-slot-selection * {
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+.vz-am__title {
+  font-size: 1.2em;
+  font-weight: bold;
+  width: -webkit-fill-available;
+  width: -moz-available;
+  width: stretch;
+  color: #333;
+  margin: 0;
+  padding: 0.5em 0;
+}
+
+.vz-availability-calendar {
+  width: -webkit-min-content;
+  width: min-content;
+}
+.vz-availability-calendar header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.vz-availability-calendar header .vz-am__title {
+  width: -webkit-max-content;
+  width: max-content;
+}
+.vz-availability-calendar header .vz-calendar-nav__button {
+  background-color: transparent;
+  border: none;
+  color: #666;
+  font-size: 1em;
+  cursor: pointer;
+  position: relative;
+}
+.vz-availability-calendar header .vz-calendar-nav__button:before {
+  top: 50%;
+  position: absolute;
+  display: block;
+  width: 2em;
+  height: 2em;
+  content: "";
+  transform: translate(-50%, -50%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z%27/%3E%3C/svg%3E");
+}
+.vz-availability-calendar header .vz-calendar-nav__button.--prev {
+  padding-left: 1.6em;
+}
+.vz-availability-calendar header .vz-calendar-nav__button.--prev:before {
+  left: 1em;
+}
+.vz-availability-calendar header .vz-calendar-nav__button.--next {
+  padding-right: 1.6em;
+}
+.vz-availability-calendar header .vz-calendar-nav__button.--next:before {
+  right: 1em;
+  transform: translate(50%, -50%) rotate(180deg);
+}
+
+.vz-calendar-grid {
+  width: -webkit-fit-content;
+  width: fit-content;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-gap: 0.5em;
+}
+.vz-calendar-grid.--loading {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.vz-calendar-grid.--loading .day {
+  animation: blink 1s infinite;
+}
+.vz-calendar-grid.--loading .day:nth-child(6n+0) {
+  animation-delay: -0s;
+}
+.vz-calendar-grid.--loading .day:nth-child(6n+1) {
+  animation-delay: -0.2s;
+}
+.vz-calendar-grid.--loading .day:nth-child(6n+2) {
+  animation-delay: -0.4s;
+}
+.vz-calendar-grid.--loading .day:nth-child(6n+3) {
+  animation-delay: -0.6s;
+}
+.vz-calendar-grid.--loading .day:nth-child(6n+4) {
+  animation-delay: -0.8s;
+}
+.vz-calendar-grid.--loading .day:nth-child(6n+5) {
+  animation-delay: -1s;
+}
+.vz-calendar-grid.--loading .day:nth-child(6n+6) {
+  animation-delay: -1.2s;
+}
+.vz-calendar-grid.--loading .day:nth-child(6n+7) {
+  animation-delay: -1.4s;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+.day {
+  width: -webkit-max-content;
+  width: max-content;
+  align-items: center;
+  justify-content: center;
+}
+.day.--header {
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #333;
+  letter-spacing: 0.05em;
+  font-size: 0.8em;
+  text-align: center;
+  width: -webkit-fill-available;
+  width: -moz-available;
+  width: stretch;
+}
+.day .day-button {
+  font-size: 1em;
+  width: 3em;
+  height: 3em;
+  border-radius: 1.5em;
+  padding: 0.5em;
+  border: none;
+  color: #666;
+}
+.day.--highlighted .day-button {
+  color: white !important;
+  background-color: #eb2 !important;
+}
+.day.--unavailable .day-button {
+  background-color: transparent;
+  pointer-events: none;
+}
+.day.--available .day-button {
+  background-color: #aaeeff;
+  color: white;
+  color: #059;
+  font-weight: bold;
+  cursor: pointer;
+}
+.day.--available .day-button:hover {
+  box-shadow: 0px 0px 8px #eebb22;
+}
+.day.--selected:not(.--unavailable) .day-button {
+  background-color: #059;
+  color: white;
+  transition: all 0.3s;
+}
+.day.--istoday .day-button {
+  border: 2px solid #059;
+}
+
+.vz-time-slots {
+  width: -webkit-fit-content;
+  width: fit-content;
+  max-width: 11em;
+}
+.vz-time-slots p {
+  margin: 0;
+  padding: 0;
+}
+.vz-time-slots .vz-am__visitor-timezone,
+.vz-time-slots .vz-am__website-timezone {
+  font-size: 0.8em;
+  color: #666;
+  padding: 0.5em 0;
+  display: block;
+}
+.vz-time-slots .vz-am__visitor-timezone b,
+.vz-time-slots .vz-am__website-timezone b {
+  display: block;
+  font-weight: bold;
+  color: #666;
+}
+
+.vz-am__time-slots__list,
+.vz-am__loading-timeslots {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  width: -webkit-min-content;
+  width: min-content;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5em;
+}
+
+.vz-am__loading-timeslots li:before {
+  display: block;
+  content: "00:00";
+  color: transparent;
+  transition: all 0.3s;
+  font-size: 1em;
+  padding: 0.5em 1em;
+  border-radius: 1.5em;
+  background-color: #EAEAEA;
+  animation: blink 1s infinite;
+}
+.vz-am__loading-timeslots li:nth-child(even):before {
+  animation-delay: -0.5s;
+}
+
+.vz-am__time-slots__item {
+  margin: 0;
+}
+.vz-am__time-slots__item button {
+  transition: all 0.3s;
+  font-size: 1em;
+  padding: 0.5em 1em;
+  border: none;
+  border-radius: 1.5em;
+  background-color: transparent;
+  color: #333;
+  border: 1px solid #00bbee;
+  cursor: pointer;
+  font-weight: bold;
+}
+.vz-am__time-slots__item button:hover {
+  background-color: #00bbee;
+  color: white;
+}
+.vz-am__time-slots__item button.--selected {
+  background-color: #CCEEFF;
+  color: #059;
+}
+
+.vz-appointment-confirmation {
+  flex-grow: 1;
+  width: -webkit-fill-available;
+  width: -moz-available;
+  width: stretch;
+}
+.vz-appointment-confirmation .vz-am__confirmation-box {
+  padding: 1em;
+  border: 1px solid #00bbee;
+  border-radius: 0.5em;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.1);
+  width: -webkit-fit-content;
+  width: fit-content;
+  margin: 1em 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  align-items: center;
+  width: 100%;
+  max-width: 35em;
+}
+.vz-appointment-confirmation .vz-am__confirmation-box h2 {
+  margin: 0;
+}
+.vz-appointment-confirmation .vz-am__confirmation-box p {
+  margin: 0;
+}
+.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button {
+  display: block;
+  font-size: 1em;
+  padding: 0.5em 1em;
+  border: none;
+  border-radius: 1.5em;
+  background-color: #00bbee;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  position: relative;
+  overflow: hidden;
+}
+.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button:hover {
+  background-color: #059;
+}
+.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled] {
+  background-color: #ccc;
+  color: #666;
+  pointer-events: none;
+  cursor: not-allowed;
+  text-indent: -999px;
+  width: 5em;
+  height: 2em;
+  padding: 0;
+}
+.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled]:after {
+  content: "";
+  display: block;
+  width: 0.8em;
+  height: 0.8em;
+  z-index: 2;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ccc;
+  border-radius: 50%;
+  box-shadow: 0px 0px 1em rgba(0, 0, 0, 0.8);
+}
+.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled]:before {
+  z-index: 1;
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  animation: rotate 1s infinite linear;
+  background-image: conic-gradient(#ccc 0%, #666 50%, #ccc 100%);
+}
+
+@keyframes rotate {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+.vz-appointments-list {
+  width: -webkit-fill-available;
+  width: -moz-available;
+  width: stretch;
+  max-width: 35em;
+}
+.vz-appointments-list ul {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.vz-am__user-appointment {
+  padding: 0.3em 0.8em;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5em 1em;
+  border: 1px solid #DDD;
+  border-radius: 0.5em;
+  background-color: #FAFAFA;
+  margin-bottom: 0.5em;
+  cursor: default;
+}
+.vz-am__user-appointment h3 {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  font-size: 1em;
+  color: #333;
+}
+.vz-am__user-appointment p {
+  color: #666;
+  margin: 0;
+}
+.vz-am__user-appointment .week-time {
+  display: inline-flex;
+  justify-content: space-between;
+  gap: 0.5em;
+}
+.vz-am__user-appointment .weekday {
+  font-style: italic;
+}
+.vz-am__user-appointment .time {
+  font-weight: bold;
+  color: #059;
+}
+
+.vz-popup {
+  text-align: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 1em;
+  border-radius: 0.5em;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+  border: 1px solid #ccc;
+}
+.vz-popup:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.5);
+  z-index: -1;
+}
+.vz-popup p {
+  font-size: 1.6em;
+}
+.vz-popup button {
+  font-size: 1em;
+  padding: 0.5em 1em;
+  border: none;
+  border-radius: 1.5em;
+  border: 1px solid #00bbee;
+  color: black;
+  cursor: pointer;
+  background-color: transparent;
+  font-weight: bold;
+}
+.vz-popup button:hover {
+  background-color: #eee;
+}
+
+/*# sourceMappingURL=index.css.map*/

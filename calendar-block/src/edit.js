@@ -29,12 +29,14 @@ import './editor.scss';
  *
  * @return {Element} Element to render.
  */
+
+import Calendar from '../../calendar-view/src/App';
 export default function Edit() {
   
 	return (
     <p { ...useBlockProps() }>
       <div id="vz-calendar">
-        The Calendar Component will be rendered here
+        <Calendar preview />
       </div>
     </p>
 	);

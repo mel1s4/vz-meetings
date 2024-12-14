@@ -4,19 +4,29 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE, PUT");
 header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization");
 
 $calendar_slug = get_option('vz_am_calendar_slug', 'calendar');
+
 register_post_type('vz-calendar', array(
   'labels' => array(
     'name' => __vz('My Calendars'),
     'singular_name' => __vz('Calendar'),
   ),
   'public' => true,
+  
+  
+  
   // has single
   'has_archive' => true,
   'rewrite' => array('slug' => $calendar_slug),
-
   'show_ui' => true,	
   'show_in_menu' => 'vz_am_settings',
-  'supports' => array('title'),
+  'supports' => array('title', 'editor'),
+  // uses gutenburg editor
+  'show_in_rest' => true,
+  'rest_base' => 'vz-calendars',
+  'rest_controller_class' => 'WP_REST_Posts_Controller',
+  'capability_type' => 'post',
+  'map_meta_cap' => true,
+  
 ));
 
 $appointment_slug = get_option('vz_am_appointment_slug', 'appointment');

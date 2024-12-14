@@ -4,7 +4,8 @@ import axios from 'axios';
 import './App.scss';
 import localizedStrings from './localized_strings.json';
 
-function App() {
+function App({ preview = false }) {
+  const [previewMode, setPreviewMode] = useState(preview);
   const [userAppointments, setUserAppointments] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState('es');
   const [timeSlotSize, setTimeSlotSize] = useState(30);
@@ -12,7 +13,6 @@ function App() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
-  const Months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const [monthAvailability, setMonthAvailability] = useState([]);
   const [timeSlots, setTimeSlots] = useState({});
   const [restNonce, setRestNonce] = useState(null);
@@ -22,10 +22,14 @@ function App() {
   );
   const [restUrl, setRestUrl] = useState('http://localhost/wp-json/');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
-
-
   const [monthIsLoading, setMonthIsLoading] = useState({});
   const [timeSlotsAreLoading, setTimeSlotsAreLoading] = useState({});
+  const [popup, setPopup] = useState({
+    open: false,
+    message: '',
+    type: 'success', // success, error, warning
+  });
+  const [confirmationIsLoading, setConfirmationIsLoading] = useState(false);
 
   function _vz(txt) {
     const lang = selectedLanguage.substring(0, 2);
@@ -54,29 +58,29 @@ function App() {
       '16:36': true,
     };
     const exampleAppointments = [
-            {
-                "id": 36,
-                "date_time": "2024-12-18T23:00:00.000Z",
-                "duration": "45"
-            },
-            {
-                "id": 35,
-                "date_time": "2024-12-13T23:00:00.000Z",
-                "duration": "45"
-            },
-            {
-                "id": 34,
-                "date_time": "2024-12-20T00:36:00.000Z",
-                "duration": "45"
-            }
-        ];
+        {
+            "id": 36,
+            "date_time": "2024-12-18T23:00:00.000Z",
+            "duration": "45"
+        },
+        {
+            "id": 35,
+            "date_time": "2024-12-13T23:00:00.000Z",
+            "duration": "45"
+        },
+        {
+            "id": 34,
+            "date_time": "2024-12-20T00:36:00.000Z",
+            "duration": "45"
+        }
+    ];
     const exampleTimeSlots = {};
     exampleTimeSlots[today.getFullYear()] = {};
     exampleTimeSlots[today.getFullYear()][today.getMonth() + 1] = {};
     exampleTimeSlots[today.getFullYear()][today.getMonth() + 1][today.getDate()] = exampleTimeSlot;
     setTimeSlots(exampleTimeSlots);
     setUserAppointments(exampleAppointments);
-    if (window?.vz_calendar_view_params) {
+    if (window?.vz_calendar_view_params && !previewMode) {
       const { 
         calendar_id,
         rest_url,
@@ -127,6 +131,7 @@ function App() {
   , [selectedDay, selectedMonth, selectedYear, calendarId]);
 
   async function getTimeSlots() {
+    if (previewMode) return;
     if (timeSlots[selectedYear] && timeSlots[selectedYear][selectedMonth + 1] && timeSlots[selectedYear][selectedMonth + 1][selectedDay]) {
       return;
     }
@@ -165,8 +170,11 @@ function App() {
       const pLoading2 = { ...timeSlotsAreLoading };
       pLoading2[selectedYear + '-' + (selectedMonth + 1) + '-' + selectedDay] = false;
       setTimeSlotsAreLoading(pLoading2);
-      
-      alert('There was an error fetching the time slots. Please try again later.');
+      setPopup({
+        open: true,
+        message: 'There was an error fetching the time slots. Please try again later.',
+        type: 'error'
+      });
       console.error(error);
     }
   }
@@ -197,7 +205,12 @@ function App() {
       const pLoadingMonths2 = { ...monthIsLoading };
       pLoadingMonths2[selectedYear + '-' + (selectedMonth + 1)] = false;
       setMonthIsLoading(pLoadingMonths2);
-      alert('There was an error fetching the availability. Please try again later.');
+      setPopup({
+        open: true,
+        message: 'There was an error fetching the availability. Please try again later.',
+        type: 'error'
+      });
+
     }
   }
 
@@ -309,34 +322,78 @@ function App() {
   
 
   async function confirmTimeSlot() {
+    if (previewMode) return;
     const data = {
       calendar_id: calendarId,
       date_time: selectedTimeSlot,
       nonce: restNonce,
     };
     try {
+      setConfirmationIsLoading(true);
       const response = await axios.post( restUrl + 'vz-am/v1/confirm_appointment', data, {
         headers: {
           'X-WP-Nonce': restNonce
         }
       });
-      alert(response.data.message);
+      setPopup({
+        open: true,
+        message: 'Your appointment has been confirmed.',
+        type: 'success'
+      });
+      setUserAppointments([...userAppointments, {
+        id: response.data.id,
+        date_time: selectedTimeSlot,
+        duration: timeSlotSize
+      }]);
+      setSelectedTimeSlot(null);
+      // remove slot from timeslots
+      const newTimeSlots = { ...timeSlots };
+      delete newTimeSlots[selectedYear][selectedMonth + 1][selectedDay][selectedTimeSlot.toLocaleTimeString('default', { hour: '2-digit', minute: '2-digit' })];
+      setTimeSlots(newTimeSlots);
+
+      setConfirmationIsLoading(false);
     } catch (error) {
       console.error(error);
-      alert('There was an error confirming the appointment. Please try again later.');
+      setConfirmationIsLoading(false);
+      setPopup({
+        open: true,
+        message: 'There was an error fetching the time slots. Please try again later.',
+        type: 'error'
+      });
     }
   }
 
+  const [highlightedDatetime, setHighlightedDatetimeVariable] = useState(null);
+  function setHighlightedDateTime(date) {
+    if (date) {
+      setHighlightedDatetimeVariable(date);
+    } else {
+      setHighlightedDatetimeVariable(null);
+    }
+  }
+
+  function dayIsHighlighted(day) {
+    const month = selectedMonth + 1;
+    const year = selectedYear;
+    if (highlightedDatetime) {
+      const [hYear, hMonth, hDay] = formatDate(highlightedDatetime).split('-');
+      return parseInt(hDay) === day && parseInt(hMonth) === month && parseInt(hYear) === year;
+    }
+  }
 
   return (
-    <section className="vz-time-slot-selection">
-      {(userAppointments.length > 0) && (
+    <section className={`vz-time-slot-selection ${preview ? '--vz-is-preview' : ''}`}>
+
+      {(userAppointments.length > 0 && !previewMode) && (
         <div className="vz-appointments-list">
           <h2 className="vz-am__title">{_vz('your-appointments')}</h2>
           <ul>
             {userAppointments.map((appointment, index) => (
               <li key={index}>
-                <article className="vz-am__user-appointment">
+                <article className="vz-am__user-appointment"
+                          onMouseEnter={() => setHighlightedDateTime(appointment.date_time)}
+                          onMouseLeave={() => setHighlightedDateTime(null)}
+                          >
                   <h3>{getDateTimeInLocale(new Date(appointment.date_time), true)[0]}</h3>
                   <p className="week-time">
                     <span className="weekday">{getDayOfWeek(new Date(appointment.date_time))}</span>
@@ -378,6 +435,7 @@ function App() {
               <div className={`day --monthday ` + 
                 ((index + 1 === selectedDay) ? ' --selected' : '') +
                 (isToday(index + 1) ? ' --istoday' : '') +
+                (dayIsHighlighted(index + 1) ? ' --highlighted' : '') +
                 (isAvailable(index + 1) ? ' --available' : ' --unavailable')
               } key={index}>
                 <button
@@ -436,7 +494,7 @@ function App() {
       </div>
       {
         (
-          selectedTimeSlot &&
+          (selectedTimeSlot || previewMode) &&
           <div className="vz-appointment-confirmation">
             <div className="vz-am__confirmation-box">
               <h2>
@@ -445,10 +503,23 @@ function App() {
               <p>
                 {selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-appointment')}` : 'Please select a time slot for your appointment.'}
               </p>
-              <button onClick={() => confirmTimeSlot()}>
+              <button 
+                disabled={confirmationIsLoading}
+                className="vz-am__confirmation-button"
+              onClick={() => confirmTimeSlot()}>
                 {_vz('confirm')}
               </button>
             </div>
+          </div>
+        )
+      }
+      {
+        popup.open && (
+          <div className={`vz-popup --${popup.type}`}>
+            <p>{popup.message}</p>
+            <button onClick={() => setPopup({ ...popup, open: false })}>
+              {_vz('Ok')}
+            </button>
           </div>
         )
       }
