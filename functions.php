@@ -87,6 +87,7 @@ function vz_am_enqueue_calendar_scripts() {
       'rest_url' => get_rest_url(),
       'slot_size' => get_post_meta(get_the_ID(), 'vz_am_duration', true),
       'availability' => vzGetAvailability(get_the_ID()),
+      'language' => get_locale(),
     ];
     wp_localize_script('vz-calendar-view', 'vz_calendar_view_params', $params);
   }
@@ -212,4 +213,20 @@ function vz_am_save_product_options($post_id) {
   update_post_meta($post_id, 'vz_am_allow_multiple_appointments', $allow_multiple_appointments);
   $calendar = $_POST['vz_am_calendar'];
   update_post_meta($post_id, 'vz_am_calendar', $calendar);
+}
+
+
+// add sortable column to appointments archive page for the calendar column
+add_filter('manage_vz-appointment_posts_columns', 'vz_am_appointment_columns');
+function vz_am_appointment_columns($columns) {
+  $columns['vz_am_calendar'] = __vz('Calendar');
+  return $columns;
+}
+
+add_action('manage_vz-appointment_posts_custom_column', 'vz_am_appointment_column_content', 10, 2);
+function vz_am_appointment_column_content($column, $post_id) {
+  if ($column === 'vz_am_calendar') {
+    $calendar_id = get_post_meta($post_id, 'calendar_id', true);
+    echo get_the_title($calendar_id);
+  }
 }

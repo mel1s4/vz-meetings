@@ -1,0 +1,78 @@
+{
+  "weekdays": {
+    "en": "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
+    "es": "Dom,Lun,Mar,Mie,Jue,Vie,Sab"
+  },
+  "months": {
+    "en": "January,February,March,April,May,June,July,August,September,October,November,December",
+    "es": "Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+  },
+  "previous": {
+    "en": "Previous",
+    "es": "Anterior"
+  },
+  "next": {
+    "en": "Next",
+    "es": "Siguiente"
+  },
+  "date": {
+    "en": "Date",
+    "es": "Fecha"
+  },
+  "time": {
+    "en": "Time",
+    "es": "Hora"
+  },
+  "location": {
+    "en": "Location",
+    "es": "Ubicación"
+  },
+  "description": {
+    "en": "Description",
+    "es": "Descripción"
+  },
+  "confirm": {
+    "en": "Confirm Appointment",
+    "es": "Confirmar Cita"
+  },
+  "cancel": {
+    "en": "Cancel",
+    "es": "Cancelar"
+  },
+  "you-selected": {
+    "en": "You have selected",
+    "es": "Usted seleccionó"
+  },
+  "for-appointment": {
+    "en": "for your appointment",
+    "es": "para su cita"
+  },
+  "minutes-per-slot": {
+    "en": "minutes per slot",
+    "es": "minutos por cita"
+  },
+  "appointment-confirmation": {
+    "en": "Appointment Confirmation",
+    "es": "Confirmar datos de su cita"
+  },
+  "loading": {
+    "en": "Loading...",
+    "es": "Cargando..."
+  },
+  "no-appointments": {
+    "en": "No appointments available",
+    "es": "No hay citas disponibles"
+  },
+  "your-timezone-is": {
+    "en": "Your timezone:",
+    "es": "Su zona horaria:"
+  },
+  "website-timezone-is": {
+    "en": "Website timezone:",
+    "es": "Zona Horaria del Sitio:"
+  },
+  "select-timezone": {
+    "en": "Select your timezone",
+    "es": "Seleccione su zona horaria"
+  }
+}

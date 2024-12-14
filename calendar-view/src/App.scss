@@ -1,7 +1,9 @@
 .vz-time-slot-selection {
+  font-size: 1rem;
   display: flex;
-  gap: 2em;
   flex-wrap: wrap;
+  width: fit-content;
+  gap: 1em;
   * {
     box-sizing: border-box;
     font-family: sans-serif;
@@ -19,11 +21,14 @@
 
 .vz-availability-calendar {
   width: min-content;
+
   header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
+    .title {
+      width: max-content;
+    }
     .vz-calendar-nav__button {
       background-color: transparent;
       border: none;
@@ -43,15 +48,15 @@
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z'/%3E%3C/svg%3E");
       }
       &.--prev {
-        padding-left: 1em;
+        padding-left: 1.6em;
         &:before {
-          left: 0;
+          left: 1em;
         }
       }
       &.--next {
-        padding-right: 1em;
+        padding-right: 1.6em;
         &:before {
-          right: 0px;
+          right: 1em;
           transform: translate(50%, -50%) rotate(180deg);
         }
       }
@@ -59,21 +64,52 @@
   }
 }
 
-.month {
+.vz-calendar-grid {
+  // move firts column to the end and span 6 columns
   width: fit-content;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   grid-gap: 0.5em;
+  
+  &.--loading {
+    pointer-events: none;
+    opacity: 0.5;
+
+    .day {
+      animation: blink 1s infinite;
+    }
+    // iterate through max 40 days and delay animation for each day
+    @for $i from 0 through 7 {
+      // .day:nth-child(odd + {$i}) {
+        .day:nth-child(6n + #{$i}) {
+          animation-delay: -#{$i * 0.2}s;
+        }
+    }
+  }
 }
 
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+
 .day {
-  width: min-content;
+  width: max-content;
+  align-items: center;
+  justify-content: center;
   &.--header {
     text-transform: uppercase;
     font-weight: bold;
     color: #333;
     letter-spacing: 0.05em;
     font-size: 0.8rem;
+    text-align: center;
+    width: stretch;
   }
   .day-button {
     font-size: 1rem;
@@ -101,7 +137,7 @@
       cursor: pointer;
     }
   } 
-  &.--selected {
+  &.--selected:not(.--unavailable) {
     .day-button {
       background-color: #059;
       color: white;
@@ -117,13 +153,54 @@
   
 }
 
-.vz-am__time-slots__list {
+.vz-time-slots {
+  width: fit-content;
+  max-width: 20rem;
+
+  p {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .vz-am__visitor-timezone,
+  .vz-am__website-timezone {
+    font-size: 0.8rem;
+    color: #666;
+    padding: 0.5em 0;
+    display: block;
+    b {
+      display: block;
+      font-weight: bold;
+      color: #666;
+    }
+  }
+}
+
+.vz-am__time-slots__list,
+.vz-am__loading-timeslots {
   list-style: none;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   width: min-content;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5em;
+}
+
+.vz-am__loading-timeslots {
+  li:before {
+    display: block;
+    content: "00:00";
+    color: transparent;
+    transition: all 0.3s;
+    font-size: 1rem;
+    padding: 0.5em 1em;
+    border-radius: 1.5em;
+    background-color: #EAEAEA;
+    animation: blink 1s infinite;
+  }
+  li:nth-child(even):before {
+    animation-delay: -0.5s;	
+  }
 }
 
 .vz-am__time-slots__item {
@@ -146,6 +223,46 @@
     &.--selected {
       background-color: #CCEEFF;
       color: #059;
+    }
+  }
+}
+
+
+.vz-appointment-confirmation {
+  flex-grow: 1;
+  width: stretch;
+  .vz-am__confirmation-box {
+    padding: 1em;
+    border: 1px solid #00bbee;
+    border-radius: 0.5em;
+    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.1);
+    width: fit-content;
+    margin: 1em 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    align-items: center;
+    width: 100%;
+    max-width: 35rem;
+    h2 {
+      margin: 0;
+    }
+    p {
+      margin: 0;
+    }
+  
+    button {
+      font-size: 1rem;
+      padding: 0.5em 1em;
+      border: none;
+      border-radius: 1.5em;
+      background-color: #00bbee;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      &:hover {
+        background-color: #059;
+      }
     }
   }
 }

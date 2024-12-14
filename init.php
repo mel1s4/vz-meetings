@@ -19,6 +19,21 @@ register_post_type('vz-calendar', array(
   'supports' => array('title'),
 ));
 
+$appointment_slug = get_option('vz_am_appointment_slug', 'appointment');
+register_post_type('vz-appointment', array(
+  'labels' => array(
+    'name' => __vz('My Appointments'),
+    'singular_name' => __vz('Appointment'),
+  ),
+  'public' => false,
+  // has single
+  'has_archive' => false,
+  'rewrite' => array('slug' => $appointment_slug),
+  'show_ui' => true,	
+  'show_in_menu' => 'vz_am_settings',
+  'supports' => array('title'),
+));
+
 if (class_exists('WooCommerce')) {
   add_action('woocommerce_product_options_general_product_data', 'vz_am_product_options');
   add_action('woocommerce_process_product_meta', 'vz_am_save_product_options');
