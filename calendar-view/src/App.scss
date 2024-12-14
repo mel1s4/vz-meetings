@@ -4,13 +4,14 @@
   flex-wrap: wrap;
   width: fit-content;
   gap: 1em;
+  max-width: 40rem;
   * {
     box-sizing: border-box;
     font-family: sans-serif;
   }
 }
 
-.title {
+.vz-am__title {
   font-size: 1.2rem;
   font-weight: bold;
   width: stretch;
@@ -26,7 +27,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    .title {
+    .vz-am__title {
       width: max-content;
     }
     .vz-calendar-nav__button {
@@ -155,7 +156,7 @@
 
 .vz-time-slots {
   width: fit-content;
-  max-width: 20rem;
+  max-width: 11rem;
 
   p {
     margin: 0;
@@ -264,5 +265,48 @@
         background-color: #059;
       }
     }
+  }
+}
+
+.vz-appointments-list {
+  width: stretch;
+  max-width: 35rem;
+  .vz-am__title {
+
+  }
+  ul {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+}
+.vz-am__user-appointment {
+  padding: 0.3em 0.8em;
+  border-top: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5em 0;
+  h3 {
+    margin: 0;
+    padding: 0;
+    font-weight: normal;
+    font-size: 1rem;
+
+  }
+  p {
+    margin: 0;
+  }
+  .week-time {
+    display: inline-flex;
+    justify-content: space-between;
+  }
+  .weekday {
+    font-style: italic;
+  }
+  .time {
+    font-weight: bold;
   }
 }

@@ -79,6 +79,38 @@ function vz_am_enqueue_calendar_scripts() {
   if (is_single() && $post->post_type === 'vz-calendar') {
     wp_enqueue_style('vz-calendar-view-styles', plugin_dir_url(__FILE__) . 'calendar-view/build/static/css/main.css', array(), '1.0.0', 'all');
     wp_enqueue_script('vz-calendar-view', plugin_dir_url(__FILE__) . 'calendar-view/build/static/js/main.js' , array('wp-element'), '0.0.1', true);
+    // get appointments from the same calendar_id and user_id, and that their date_time is greater than the current date
+    $appointments = get_posts(array(
+      'post_type' => 'vz-appointment',
+      'numberposts' => -1,	
+      'post_status' => 'publish',
+      'fields' => 'ids',
+      'meta_query' => array(
+        array(
+          'key' => 'calendar_id',
+          'value' => get_the_ID(),
+        ),
+        array(
+          'key' => 'user_id',
+          'value' => get_current_user_id(),
+        ),
+        array(
+          'key' => 'date_time',
+          'value' => date('Y-m-d H:i:s'),
+          'compare' => '>=',
+        ),
+      ),
+    ));
+    $appointments = array_map(function($id) {
+      return [
+        'id' => $id,
+        'date_time' => get_post_meta($id, 'date_time', true),
+        'duration' => get_post_meta($id, 'duration', true),
+      ];
+    }, $appointments);
+    usort($appointments, function($a, $b) {
+      return strtotime($a['date_time']) - strtotime($b['date_time']);
+    });
     $params = [
       'availability_rules' => JSON_decode(get_post_meta(get_the_ID(), 'vz_availability_rules', true)),
       'time_zone' => get_option('timezone_string'),
@@ -88,6 +120,7 @@ function vz_am_enqueue_calendar_scripts() {
       'slot_size' => get_post_meta(get_the_ID(), 'vz_am_duration', true),
       'availability' => vzGetAvailability(get_the_ID()),
       'language' => get_locale(),
+      'appointments' => $appointments,
     ];
     wp_localize_script('vz-calendar-view', 'vz_calendar_view_params', $params);
   }

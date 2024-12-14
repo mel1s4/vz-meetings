@@ -5,6 +5,7 @@ import './App.scss';
 import localizedStrings from './localized_strings.json';
 
 function App() {
+  const [userAppointments, setUserAppointments] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState('es');
   const [timeSlotSize, setTimeSlotSize] = useState(30);
   const [calendarId, setCalendarId] = useState(null);
@@ -28,7 +29,11 @@ function App() {
 
   function _vz(txt) {
     const lang = selectedLanguage.substring(0, 2);
-    return localizedStrings[txt][lang];
+    if (localizedStrings[txt] && localizedStrings[txt][lang]) {
+      return localizedStrings[txt][lang];
+    }
+    console.log(`No localized string for ${txt}`);
+    return txt;
   }
 
   useEffect(() => {
@@ -48,12 +53,29 @@ function App() {
       '15:48': true,
       '16:36': true,
     };
+    const exampleAppointments = [
+            {
+                "id": 36,
+                "date_time": "2024-12-18T23:00:00.000Z",
+                "duration": "45"
+            },
+            {
+                "id": 35,
+                "date_time": "2024-12-13T23:00:00.000Z",
+                "duration": "45"
+            },
+            {
+                "id": 34,
+                "date_time": "2024-12-20T00:36:00.000Z",
+                "duration": "45"
+            }
+        ];
     const exampleTimeSlots = {};
     exampleTimeSlots[today.getFullYear()] = {};
     exampleTimeSlots[today.getFullYear()][today.getMonth() + 1] = {};
     exampleTimeSlots[today.getFullYear()][today.getMonth() + 1][today.getDate()] = exampleTimeSlot;
     setTimeSlots(exampleTimeSlots);
-
+    setUserAppointments(exampleAppointments);
     if (window?.vz_calendar_view_params) {
       const { 
         calendar_id,
@@ -63,18 +85,19 @@ function App() {
         slot_size,
         language,
         rest_nonce,
+        appointments,
        } = window.vz_calendar_view_params;
-      setCalendarId(calendar_id);
-      setRestUrl(rest_url);
-      setTimeZone(time_zone);
-      setTimeSlotSize(slot_size);
-      setSelectedLanguage(language);
-      setRestNonce(rest_nonce);
-      const nmA = {};
-      nmA[today.getFullYear() + '-' + (today.getMonth() + 1)] = availability?.available_days;
-      setMonthAvailability(nmA);
-      setTimeSlots(availability?.timeslots);
-
+        setCalendarId(calendar_id);
+        setRestUrl(rest_url);
+        setTimeZone(time_zone);
+        setTimeSlotSize(slot_size);
+        setSelectedLanguage(language);
+        setRestNonce(rest_nonce);
+        const nmA = {};
+        nmA[today.getFullYear() + '-' + (today.getMonth() + 1)] = availability?.available_days;
+        setMonthAvailability(nmA);
+        setTimeSlots(availability?.timeslots);
+        setUserAppointments(appointments);
     }
   }, []);
 
@@ -84,8 +107,6 @@ function App() {
       selectedMonth >= 0 &&
       selectedYear > 2000
     ) {
-      // const [y, month, date] = selectedDay.split('-');
-      // return `${Months[parseInt(month) - 1].slice(0,3)} ${parseInt(date)}`;
       return `${Month(selectedMonth)} ${selectedDay}, ${selectedYear}`;
     }
     return
@@ -267,13 +288,25 @@ function App() {
     return _vz('months').split(',')[month];
   }
 
-  function selectedDateTimeInLocale() {
-    // December 17, 2021 @11:00am
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const date = selectedTimeSlot.toLocaleDateString(selectedLanguage.replace('_', '-'), options);
-    const time = selectedTimeSlot.toLocaleTimeString(selectedLanguage.replace('_', '-'), { hour: 'numeric', minute: '2-digit' });
-    return `${date} @${time}`;
+
+  function getDateTimeInLocale(date, separated = false) {
+    const year = date.toLocaleString('default', { year: 'numeric' });
+    // const month = date.toLocaleString('default', { month: 'long' });
+    const month = _vz('months').split(',')[date.getMonth()];
+    const day = date.toLocaleString('default', { day: 'numeric' });
+    const time = date.toLocaleString('default', { hour: 'numeric', minute: '2-digit' });
+    if (separated) {
+      return [`${month} ${day}, ${year}`,`@${time.toLowerCase()}`];
+    } else {
+      return `${month} ${day}, ${year} @${time.toLowerCase()}`;
+    }
   }
+
+  function getDayOfWeek(date) {
+    return _vz('weekdays_long').split(',')[date.getDay()];	
+  }
+
+  
 
   async function confirmTimeSlot() {
     const data = {
@@ -282,12 +315,6 @@ function App() {
       nonce: restNonce,
     };
     try {
-      /* 
-      beforeSend: function(xhr) {
-        xhr.setRequestHeader('X-WP-Nonce', vz_am_params.nonce);
-      },
-      const response = await axios.post( restUrl + 'vz-am/v1/confirm_appointment', data);
-      */
       const response = await axios.post( restUrl + 'vz-am/v1/confirm_appointment', data, {
         headers: {
           'X-WP-Nonce': restNonce
@@ -303,12 +330,33 @@ function App() {
 
   return (
     <section className="vz-time-slot-selection">
+      {(userAppointments.length > 0) && (
+        <div className="vz-appointments-list">
+          <h2 className="vz-am__title">{_vz('your-appointments')}</h2>
+          <ul>
+            {userAppointments.map((appointment, index) => (
+              <li key={index}>
+                <article className="vz-am__user-appointment">
+                  <h3>{getDateTimeInLocale(new Date(appointment.date_time), true)[0]}</h3>
+                  <p className="week-time">
+                    <span className="weekday">{getDayOfWeek(new Date(appointment.date_time))}</span>
+                    <span className="time">{getDateTimeInLocale(new Date(appointment.date_time), true)[1]}</span>
+                  </p>
+                  <p className="duration">
+                    {_vz('duration')}: {appointment.duration} {_vz('minutes')}
+                  </p>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="vz-availability-calendar">
         <header>
           <button className="vz-calendar-nav__button --prev" onClick={(e) => previousMonth(e) }>
             {_vz('previous')}
           </button>
-          <h1 className="title">{Month(selectedMonth)} {selectedYear}</h1>
+          <h1 className="vz-am__title">{Month(selectedMonth)} {selectedYear}</h1>
           <button className="vz-calendar-nav__button --next" onClick={(e) => nextMonth(e) }>
             {_vz('next')}
           </button>
@@ -328,7 +376,7 @@ function App() {
           {
             Array(getDaysInMonth(selectedMonth, selectedYear)).fill(null).map((_, index) => (
               <div className={`day --monthday ` + 
-                ((index + 1 == selectedDay) ? ' --selected' : '') +
+                ((index + 1 === selectedDay) ? ' --selected' : '') +
                 (isToday(index + 1) ? ' --istoday' : '') +
                 (isAvailable(index + 1) ? ' --available' : ' --unavailable')
               } key={index}>
@@ -344,7 +392,7 @@ function App() {
         </div>
       </div>
       <div className="vz-time-slots">
-        <h2 className="title">{selectedDateFormatted()}</h2>
+        <h2 className="vz-am__title">{selectedDateFormatted()}</h2>
         <p>
           {timeSlotSize} {_vz('minutes-per-slot')}
         </p>
@@ -395,7 +443,7 @@ function App() {
                 {_vz('appointment-confirmation')}
               </h2>
               <p>
-                {selectedTimeSlot ? `${_vz('you-selected')} ${selectedDateTimeInLocale()} ${_vz('for-appointment')}` : 'Please select a time slot for your appointment.'}
+                {selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-appointment')}` : 'Please select a time slot for your appointment.'}
               </p>
               <button onClick={() => confirmTimeSlot()}>
                 {_vz('confirm')}

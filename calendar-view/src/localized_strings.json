@@ -3,6 +3,10 @@
     "en": "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
     "es": "Dom,Lun,Mar,Mie,Jue,Vie,Sab"
   },
+  "weekdays_long": {
+    "en": "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday",
+    "es": "Domingo,Lunes,Martes,Miércoles,Jueves,Viernes,Sábado"
+  },
   "months": {
     "en": "January,February,March,April,May,June,July,August,September,October,November,December",
     "es": "Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
@@ -64,8 +68,8 @@
     "es": "No hay citas disponibles"
   },
   "your-timezone-is": {
-    "en": "Your timezone:",
-    "es": "Su zona horaria:"
+    "en": "Current Timezone:",
+    "es": "Zona Horaria Actual:"
   },
   "website-timezone-is": {
     "en": "Website timezone:",
@@ -74,5 +78,17 @@
   "select-timezone": {
     "en": "Select your timezone",
     "es": "Seleccione su zona horaria"
+  },
+  "your-appointments": {
+    "en": "Your Appointments",
+    "es": "Tus Citas"
+  },
+  "duration": {
+    "en": "Duration",
+    "es": "Duración"
+  },
+  "minutes": {
+    "en": "minutes",
+    "es": "minutos"
   }
 }

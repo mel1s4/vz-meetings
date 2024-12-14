@@ -311,13 +311,15 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
 
   // remove appointments from timeslots
   $appointments_ids = get_posts($args);
-  foreach ($appointments as $appointment) {
-    $date_time = new DateTime(get_post_meta($appointment->ID, 'date_time', true));
-    $start = $date_time->format('H:i');
-    $end = $date_time->add(new DateInterval('PT' . $slot_total_duration . 'M'))->format('H:i');
-    foreach ($timeslots as $time => $available) {
-      if ($time >= $start && $time < $end) {
-        $timeslots[$time] = false;
+  if (!empty($appointments_ids)) {
+    foreach ($appointments as $appointment) {
+      $date_time = new DateTime(get_post_meta($appointment->ID, 'date_time', true));
+      $start = $date_time->format('H:i');
+      $end = $date_time->add(new DateInterval('PT' . $slot_total_duration . 'M'))->format('H:i');
+      foreach ($timeslots as $time => $available) {
+        if ($time >= $start && $time < $end) {
+          $timeslots[$time] = false;
+        }
       }
     }
   }
