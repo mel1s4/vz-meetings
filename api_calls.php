@@ -15,6 +15,10 @@ function vz_am_register_rest_routes() {
     'methods' => 'POST',
     'callback' => 'vz_am_confirm_appointment',
   ));
+  register_rest_route('vz-am/v1', '/create_invitation', array(
+    'methods' => 'POST',
+    'callback' => 'vz_am_create_calendar_invitation',
+  ));
 }
 
 function vz_create_appointment_title($appointment) {
@@ -333,4 +337,22 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
   }
 
   return $timeslots;
+}
+
+function vz_am_create_calendar_invitation($request) {
+  $params = $request->get_params();
+  $nonce = $request->get_header('X-WP-Nonce'); // Get the nonce from the request header
+  if (!wp_verify_nonce($nonce, 'wp_rest')) {
+    return new WP_Error('invalid_nonce', 'Invalid nonce', ['status' => 403]);
+  }
+  $calendar_id = $request->get_param('calendar_id');
+  
+  $new_invitation = [
+    'calendar_id' => $calendar_id,
+  ];
+  $new_invitation_id = wp_insert_post([
+    'post_type' => 'vz-am-invitation',
+    'post_title' => get_the_title($calendar_id),
+    'post_status' => 'publish',
+  ]);
 }

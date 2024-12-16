@@ -29,8 +29,12 @@ function vz_am_enqueue_styles() {
   if (get_current_screen()->post_type === 'vz-calendar') {
     wp_enqueue_style('vz-availability-rules-styles', plugin_dir_url(__FILE__) . 'availability-rules/build/static/css/main.css', array(), '1.0.0', 'all');
     wp_enqueue_script('vz-availability-rules', plugin_dir_url(__FILE__) . 'availability-rules/build/static/js/main.js' , array('wp-element'), '0.0.1', true);
+    $availability_rules = get_post_meta(get_the_ID(), 'vz_availability_rules', true);
+    if (!$availability_rules) {
+      $availability_rules = '[]';
+    }
     $params = [
-      'availability_rules' => JSON_decode(get_post_meta(get_the_ID(), 'vz_availability_rules', true)),
+      'availability_rules' => JSON_decode($availability_rules),
       'time_zone' => get_option('timezone_string'),
       'endpoint_domain' => get_rest_url(),
     ];
@@ -51,25 +55,21 @@ function vz_am_settings_page() {
   );
   add_submenu_page(
     'vz_am_settings',
-    'Calendar View',
-    'Calendar View', 
+    __vz('Settings'),
+    __vz('Settings'), 
     'manage_options', 
-    'vz_am_calendar', 
-    'vz_am_calendar_page_content'
+    'vz_am_my_schedule', 
+    'vz_am_settings_page_content'
   );
 }
 
 function vz_am_settings_page_content() {
   echo '<h1>' . __vz("Appointments") . '</h1>';
-  echo '<form method="post" action="options.php">';
-  settings_fields('vz_am_settings');
-  do_settings_sections('vz_am_settings');
-  submit_button();
-  echo '</form>';
 }
 
-function vz_am_calendar_page_content() {
+function vz_am_my_schedule_page_content() {
   echo '<h1>' . __vz("Calendar") . '</h1>';
+  echo "<div id='vz-am-schedule'></div>";
 }
 
 add_action('wp_enqueue_scripts', 'vz_am_enqueue_calendar_scripts');
@@ -253,6 +253,9 @@ function vz_am_save_product_options($post_id) {
 add_filter('manage_vz-appointment_posts_columns', 'vz_am_appointment_columns');
 function vz_am_appointment_columns($columns) {
   $columns['vz_am_calendar'] = __vz('Calendar');
+
+  // scheduled hour
+  $columns['vz_am_date_time'] = __vz('Date and Time');
   return $columns;
 }
 
@@ -261,5 +264,111 @@ function vz_am_appointment_column_content($column, $post_id) {
   if ($column === 'vz_am_calendar') {
     $calendar_id = get_post_meta($post_id, 'calendar_id', true);
     echo get_the_title($calendar_id);
+  }
+  if ($column === 'vz_am_date_time') {
+    $date_time = get_post_meta($post_id, 'date_time', true); // this is a date object
+    // echo date_format( date($date_time), 'Y-m-d H:i:s');
+    echo date('D, M d, Y @H:i:s', strtotime($date_time));
+    // echo duration
+    $duration = get_post_meta($post_id, 'duration', true);
+    echo ' (' . $duration . ' ' . __vz('minutes') . ')';
+  }
+}
+
+// add calendar filter
+add_action('restrict_manage_posts', 'vz_am_appointment_filter');
+function vz_am_appointment_filter() {
+  global $typenow;
+  if ( $typenow === 'vz-appointment') {
+    $calendars = vz_get_calendars();
+    echo '<select name="calendar_id">';
+    echo '<option value="">'.__vz('All Calendars').'</option>';
+    foreach ($calendars as $calendar) {
+      $selected_calendar =  '';
+      if (isset($_GET['calendar_id']) && $_GET['calendar_id'] == $calendar['ID']) {
+        $selected_calendar = 'selected';
+      }
+      echo '<option value="' . $calendar['ID']  .'" '.$selected_calendar.'>' . $calendar['post_title'] . '</option>';
+    }
+    echo '</select>';
+
+    $status = [
+      ['name' => 'past', 'title' => __vz('Past')],
+      ['name' => 'upcoming', 'title' => __vz('Upcoming')],
+    ];
+    echo '<select name="vz-ap-status">';
+    echo '<option value="">'.__vz('All Status').'</option>';
+    foreach ($status as $calendar) {
+      $selected_status =  '';
+      if (isset($_GET['vz-ap-status']) && $_GET['vz-ap-status'] == $calendar['ID']) {
+        $selected_status = 'selected';
+      }
+      echo '<option value="' . $calendar['name']  .'" '.$selected_status.'>' . $calendar['title'] . '</option>';
+    }
+    echo '</select>';
+  }
+}
+
+function vz_get_calendars() {
+  // make a custom sql query to the database to get all the calendars
+  global $wpdb;
+  $query = "SELECT ID, post_title FROM $wpdb->posts WHERE post_type = 'vz-calendar'";
+  $calendars = $wpdb->get_results($query, ARRAY_A);
+  return $calendars;
+}
+
+add_filter('parse_query', 'vz_am_appointment_filter_query');
+function vz_am_appointment_filter_query($query) {
+  global $typenow;
+  if ($typenow === 'vz-appointment' && is_admin()) {
+    $calendar_id = $_GET['calendar_id'] ?? '';
+    if ($calendar_id) {
+      $query->query_vars['meta_key'] = 'calendar_id';
+      $query->query_vars['meta_value'] = $calendar_id;
+    }
+
+    $status = $_GET['vz-ap-status'] ?? '';
+    if ($status) {
+      switch ($status) {
+        case 'past':
+          $query->query_vars['meta_key'] = 'date_time';
+          $query->query_vars['meta_value'] = date('Y-m-d H:i:s');
+          $query->query_vars['meta_compare'] = '<';
+          break;
+        case 'upcoming':
+          $query->query_vars['meta_key'] = 'date_time';
+          $query->query_vars['meta_value'] = date('Y-m-d H:i:s');
+          $query->query_vars['meta_compare'] = '>';
+          break;
+      }
+    }
+  }
+}
+
+
+
+// make the column sortable
+add_filter('manage_edit-vz-appointment_sortable_columns', 'vz_am_appointment_sortable_columns');
+function vz_am_appointment_sortable_columns($columns) {
+  $columns['vz_am_calendar'] = 'vz_am_calendar';
+  $columns['vz_am_date_time'] = 'vz_am_date_time';
+  return $columns;
+}
+
+add_action('pre_get_posts', 'vz_am_appointment_sortable_columns_orderby');
+function vz_am_appointment_sortable_columns_orderby($query) {
+  $post_type = $query->get('post_type');
+  if (!is_admin() || $post_type !== 'vz-appointment') {
+    return;
+  }
+  $orderby = $query->get('orderby');
+  if ($orderby === 'vz_am_calendar') {
+    $query->set('meta_key', 'calendar_id');
+    $query->set('orderby', 'meta_value_num');
+  }
+  if ($orderby === 'vz_am_date_time') {
+    $query->set('meta_key', 'date_time');
+    $query->set('orderby', 'meta_value');
+    $query->set('meta_type', 'DATE'); 
   }
 }

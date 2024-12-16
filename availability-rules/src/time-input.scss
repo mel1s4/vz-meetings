@@ -1,0 +1,28 @@
+.vz-am-time-input {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  justify-content: center;
+  width: min-content;
+  input {
+    font-size: 1em;
+    padding: 0.3em 0.6em;
+    border: 1px solid #ccc;
+    width: 2em;
+    text-align: center;
+  }
+  .hours {
+    border-radius: 0.5em 0 0 0.5em;
+    border-right: 0;
+  }
+  span {
+    display: block;
+    padding: 0.3em 0.6em;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+  }
+  .minutes {
+    border-radius: 0 0.5em 0.5em 0;
+    border-left: 0;
+  }
+}

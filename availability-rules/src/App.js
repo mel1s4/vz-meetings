@@ -1,16 +1,16 @@
 import './App.scss';
 import React, { use, useState, useEffect } from 'react';
-
+import CalendarOptions from './calendarOption';
 function App() {
   const [timeZone, setTimeZone] = useState('');
   const availabilityRuleTemplate = {
     id: 0, 
     name: 'New Rule',
-    type: 'between-dates',
+    type: 'weekday',
     action: 'available',
-    includeTime: false,
-    startTime: '00:00',
-    endTime: '23:59',
+    includeTime: true,
+    startTime: '11:00',
+    endTime: '17:00',
     weekdays: [],
     specificDate: '',
     startDate: '',
@@ -22,7 +22,7 @@ function App() {
   const ruleTypes = [
     {
       name: "On a Week Day",
-      value: "week-day",
+      value: "weekday",
     },
     {
       name: "On a Specific Date",
@@ -83,7 +83,7 @@ function App() {
         rule.type = e.target.value;
         break;
       case 'include-time':
-        rule.includeTime = e.target.checked;
+        rule.includeTime = !e.target.checked;
         break;
       case 'vz-rule-action':
         if (e.target.checked) {
@@ -130,15 +130,23 @@ function App() {
   }
   , []);
   return (
-      <section className="vz-availability-rules">  
-        <button className="add-rule" onClick={(e) => addRule(e)}>
-          + New Rule
-        </button>
+      <div>
+      <CalendarOptions />
+      <section className="vz-availability-rules">
+        <header className="vz-am__header">
+          <h2>
+            Availability Rules
+          </h2>
+
+          <button className="add-rule" onClick={(e) => addRule(e)}>
+            + New Rule
+          </button>
+        </header>
         <div className="vz-availability-rules__container">
           <ul className="vz-availability-rules__list">
             {availabilityRules.length > 0 && availabilityRules.map((rule) => {
                 return (
-                  <li key={rule.id} className="vz-availability-rule__item">
+                  <li key={rule.id} className={`vz-availability-rule__item ${rule.action === 'available' ? '--available' : '--unavailable'}`}>
                      <section className="vz-rule-nav">
                         <button onClick={(e) => moveRule(e,'up', rule.id)}>
                           Up
@@ -187,18 +195,50 @@ function App() {
                           }
                         </select>
                       </div>
-                      <div className="vz-am__ar__input">
+                      <div className="vz-am__ar__input --option-checkbox">
                         <label>
                           <input type="checkbox" 
                                 name="include-time"
                                 value = "include-time"
                                 {
-                                  ...(rule.includeTime ? {checked: true} : {})
+                                  ...(!rule.includeTime ? {checked: true} : {})
                                 }
                                 />
-                          Include Time
+                          All day
                         </label>
+                        {
+                          rule.type === 'between-dates' &&
+                            (
+                                <label>
+                                  <input type="checkbox"
+                                        name="show-weekdays"
+                                        value="show-weekdays"
+                                        {
+                                          ...(rule.showWeekdays ? {defaultChecked: true} : {})
+                                        } />
+                                  On Weekdays
+                                </label>
+                            )
+                        }
                       </div>
+                      {
+                        rule.type === 'between-dates' && (
+                          <div className="vz-am__ar__input --time-range">
+                            <label>
+                            <span> Start Date </span>
+                              <input type="date"
+                                     name="start-date"
+                                      defaultValue={rule.startDate} />
+                            </label>
+                            <label>
+                              <span> End Date </span>
+                              <input type="date"
+                                     name="end-date"
+                                      defaultValue={rule.endDate} />
+                            </label>
+                          </div>
+                        )
+                      }
                       {
                         rule.includeTime && (
                           <div  className="vz-am__ar__input --time-range">
@@ -220,42 +260,9 @@ function App() {
                           </div>
                         )
                       }
+                      
                       {
-                        rule.type === 'between-dates' &&
-                          (
-                            <div className="vz-am__ar__input">
-                              <label>
-                                <input type="checkbox"
-                                      name="show-weekdays"
-                                      value="show-weekdays"
-                                      {
-                                        ...(rule.showWeekdays ? {defaultChecked: true} : {})
-                                      } />
-                                On Weekdays
-                              </label>
-                            </div>
-                          )
-                      }
-                      {
-                        rule.type === 'between-dates' && (
-                          <div className="vz-am__ar__input --time-range">
-                            <label>
-                            <span> Start Date </span>
-                              <input type="date"
-                                     name="start-date"
-                                      defaultValue={rule.startDate} />
-                            </label>
-                            <label>
-                              <span> End Date </span>
-                              <input type="date"
-                                     name="end-date"
-                                      defaultValue={rule.endDate} />
-                            </label>
-                          </div>
-                        )
-                      }
-                      {
-                        ((rule.type === 'between-dates' && rule.showWeekdays) ) && (
+                        ((rule.type === 'between-dates' && rule.showWeekdays) || (rule.type === 'weekday') ) && (
                           <div className="vz-am__ar__input --weekdays">
                             <p>
                               Select Week Days
@@ -295,13 +302,12 @@ function App() {
                           </div>
                         )
                       }
-                      
-                     
-                      
                     </form>
                   </li>
                 );
-              })}
+              })
+              
+              }
           </ul>
         </div>
         
@@ -310,6 +316,7 @@ function App() {
                 name="vz-appointments-availability-rules"
                  />
     </section>
+    </div>
   );
 }
 
