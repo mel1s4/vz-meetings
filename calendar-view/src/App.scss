@@ -244,7 +244,7 @@
 }
 
 
-.vz-appointment-confirmation {
+.vz-meeting-confirmation {
   flex-grow: 1;
   width: stretch;
   .vz-am__confirmation-box {
@@ -335,7 +335,7 @@
   }
 }
 
-.vz-appointments-list {
+.vz-meetings-list {
   width: stretch;
   max-width: 35em;
   .vz-am__title {
@@ -350,7 +350,7 @@
   }
 
 }
-.vz-am__user-appointment {
+.vz-am__user-meeting {
   padding: 0.3em 0.8em;
   display: flex;
   justify-content: space-between;

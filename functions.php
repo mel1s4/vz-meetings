@@ -1,8 +1,8 @@
 <?php
 /*
-Plugin Name: Viroz Appointment Manager
-Plugin URI: https://viroz.studio/vz-appointment-manager
-Description: This plugin will help you to sell and manage your appointments for services and products.
+Plugin Name: Viroz Meeting Manager
+Plugin URI: https://viroz.studio/vz-meeting-manager
+Description: This plugin will help you to sell and manage your meetings for services and products.
 Version: 0.0.1
 Author: Melisa Viroz
 Author URI: https://melisaviroz.com
@@ -46,8 +46,8 @@ function vz_am_enqueue_styles() {
 add_action('admin_menu', 'vz_am_settings_page');
 function vz_am_settings_page() {
   add_menu_page(
-    __vz("Appointments"),
-    __vz("Appointments"),
+    __vz("Meetings"),
+    __vz("Meetings"),
     'manage_options', 
     'vz_am_settings', 
     'vz_am_settings_page_content',
@@ -64,7 +64,7 @@ function vz_am_settings_page() {
 }
 
 function vz_am_settings_page_content() {
-  echo '<h1>' . __vz("Appointments") . '</h1>';
+  echo '<h1>' . __vz("Meetings") . '</h1>';
 }
 
 function vz_am_my_schedule_page_content() {
@@ -79,9 +79,9 @@ function vz_am_enqueue_calendar_scripts() {
   if (is_single() && $post->post_type === 'vz-calendar') {
     wp_enqueue_style('vz-calendar-view-styles', plugin_dir_url(__FILE__) . 'calendar-view/build/static/css/main.css', array(), '1.0.0', 'all');
     wp_enqueue_script('vz-calendar-view', plugin_dir_url(__FILE__) . 'calendar-view/build/static/js/main.js' , array('wp-element'), '0.0.1', true);
-    // get appointments from the same calendar_id and user_id, and that their date_time is greater than the current date
-    $appointments = get_posts(array(
-      'post_type' => 'vz-appointment',
+    // get meetings from the same calendar_id and user_id, and that their date_time is greater than the current date
+    $meetings = get_posts(array(
+      'post_type' => 'vz-meeting',
       'numberposts' => -1,	
       'post_status' => 'publish',
       'fields' => 'ids',
@@ -101,14 +101,14 @@ function vz_am_enqueue_calendar_scripts() {
         ),
       ),
     ));
-    $appointments = array_map(function($id) {
+    $meetings = array_map(function($id) {
       return [
         'id' => $id,
         'date_time' => get_post_meta($id, 'date_time', true),
         'duration' => get_post_meta($id, 'duration', true),
       ];
-    }, $appointments);
-    usort($appointments, function($a, $b) {
+    }, $meetings);
+    usort($meetings, function($a, $b) {
       return strtotime($a['date_time']) - strtotime($b['date_time']);
     });
     $params = [
@@ -120,7 +120,7 @@ function vz_am_enqueue_calendar_scripts() {
       'slot_size' => get_post_meta(get_the_ID(), 'vz_am_duration', true),
       'availability' => vzGetAvailability(get_the_ID()),
       'language' => get_locale(),
-      'appointments' => $appointments,
+      'meetings' => $meetings,
     ];
     wp_localize_script('vz-calendar-view', 'vz_calendar_view_params', $params);
   }
@@ -145,7 +145,68 @@ function vz_am_calendar_options() {
     'normal',
     'default'
   );
+
+  add_meta_box(
+    'vz_am_invite_options',
+    __vz('Invite Details'),
+    'vz_am_invite_details_content',
+    'vz-am-invite',
+    'normal',
+    'default'
+  );
 }
+
+
+function vz_am_invite_details_content($post) {
+  $calendar_ids = get_posts([
+    'post_type' => 'vz-calendar',
+    'numberposts' => -1,
+    'fields' => 'ids',
+  ]);
+  print_x($calendar_ids);
+  ?>
+  <article class="vz-am__invitation">
+    <div class="vz-am__invitation__input status">
+      <label>
+        <input type="checkbox">
+        <span>Active</span>
+      </label>
+    </div>
+    <div class="vz-am__invitation__input number-of-uses">
+      <label>
+        # of uses
+      </label>
+      <input type="number" value="1">
+    </div>
+    <div class="vz-am__invitation__input">
+      <label>
+        Expiration Date
+      </label>
+      <input type="date" value="2024-12-17">
+    </div>
+    <div class="vz-am__invitation__input">
+      <label>
+        <input type="checkbox">
+        User may reuse
+      </label>
+    <label>
+      <input type="checkbox" checked="">
+      One meeting at a time
+    </label>
+  </div>
+  <div class="vz-am__invitation__input">
+    <label>
+      Invitation Url'
+    </label>
+    <div class="invitation-url">
+      <input type="text" value="">
+      <button>Copy</button>
+    </div>
+  </div>
+  </article>
+  <?php
+}
+
 add_action(
   'add_meta_boxes', 
   'vz_am_calendar_options'
@@ -159,10 +220,10 @@ function vz_am_availability_options_content($post) {
 
 function vz_am_calendar_options_content($post) {
   $duration = get_post_meta($post->ID, 'vz_am_duration', true);
-  echo '<label for="vz_am_duration">' . __vz('Minimum appointment size in minutes') . '</label>';
+  echo '<label for="vz_am_duration">' . __vz('Minimum meeting size in minutes') . '</label>';
   echo '<input type="number" id="vz_am_duration" name="vz_am_duration" value="' . $duration . '">';
   $rest = get_post_meta($post->ID, 'vz_am_rest', true);
-  echo '<label for="vz_am_rest">' . __vz('Rest between appointments') . '</label>';
+  echo '<label for="vz_am_rest">' . __vz('Rest between meetings') . '</label>';
   echo '<input type="number" id="vz_am_rest" name="vz_am_rest" value="' . $rest . '">';
 }
 
@@ -185,30 +246,30 @@ function vz_am_save_calendar_options($post_id) {
       $_POST['vz_am_duration']
     );
   }
-  if (array_key_exists('vz-appointments-availability-rules', $_POST)) {
+  if (array_key_exists('vz-meetings-availability-rules', $_POST)) {
     update_post_meta(
       $post_id,
       'vz_availability_rules',
-      $_POST['vz-appointments-availability-rules']
+      $_POST['vz-meetings-availability-rules']
     );
   }
 }
 
 function vz_am_woocommerce_not_active() {
-  echo '<div class="notice notice-error"><p>' . __vz('WooCommerce is not active. Please activate WooCommerce to use the Appointment Manager plugin.') . '</p></div>';
+  echo '<div class="notice notice-error"><p>' . __vz('WooCommerce is not active. Please activate WooCommerce to use the Meeting Manager plugin.') . '</p></div>';
 }
 
 function vz_am_product_options() {
   woocommerce_wp_text_input(array(
     'id' => 'vz_am_duration',
     'label' => __vz('Duration'),
-    'description' => __vz('Enter the duration of the appointment in minutes.'),
+    'description' => __vz('Enter the duration of the meeting in minutes.'),
   ));
   // una opcion para permitirle al administrador decidir si los minutos se pueden agendar de manera separa o unida
   woocommerce_wp_checkbox(array(
-    'id' => 'vz_am_allow_multiple_appointments',
-    'label' => __vz('Allow multiple appointments'),
-    'description' => __vz('Check this box to allow customers to create more than one appointment with their available minutes.'),
+    'id' => 'vz_am_allow_multiple_meetings',
+    'label' => __vz('Allow multiple meetings'),
+    'description' => __vz('Check this box to allow customers to create more than one meeting with their available minutes.'),
   ));
   // a drop down menu to select the calendar from the calendar post type
   $selected_calendar = get_post_meta(get_the_ID(), 'vz_am_calendar', true);
@@ -222,9 +283,9 @@ function vz_product_select_calendar_option($selected_calendar) {
   ));
 ?>
 
-<p class="form-field vz_am_allow_multiple_appointments_field ">
+<p class="form-field vz_am_allow_multiple_meetings_field ">
 
-  <label for="vz_am_allow_multiple_appointments">
+  <label for="vz_am_allow_multiple_meetings">
     <?php e_vz('Calendar')  ?>
   </label>
   <select name="vz_am_calendar">
@@ -242,16 +303,16 @@ function vz_product_select_calendar_option($selected_calendar) {
 function vz_am_save_product_options($post_id) {
   $duration = $_POST['vz_am_duration'];
   update_post_meta($post_id, 'vz_am_duration', $duration);
-  $allow_multiple_appointments = isset($_POST['vz_am_allow_multiple_appointments']) ? 'yes' : 'no';
-  update_post_meta($post_id, 'vz_am_allow_multiple_appointments', $allow_multiple_appointments);
+  $allow_multiple_meetings = isset($_POST['vz_am_allow_multiple_meetings']) ? 'yes' : 'no';
+  update_post_meta($post_id, 'vz_am_allow_multiple_meetings', $allow_multiple_meetings);
   $calendar = $_POST['vz_am_calendar'];
   update_post_meta($post_id, 'vz_am_calendar', $calendar);
 }
 
 
-// add sortable column to appointments archive page for the calendar column
-add_filter('manage_vz-appointment_posts_columns', 'vz_am_appointment_columns');
-function vz_am_appointment_columns($columns) {
+// add sortable column to meetings archive page for the calendar column
+add_filter('manage_vz-meeting_posts_columns', 'vz_am_meeting_columns');
+function vz_am_meeting_columns($columns) {
   $columns['vz_am_calendar'] = __vz('Calendar');
 
   // scheduled hour
@@ -259,8 +320,8 @@ function vz_am_appointment_columns($columns) {
   return $columns;
 }
 
-add_action('manage_vz-appointment_posts_custom_column', 'vz_am_appointment_column_content', 10, 2);
-function vz_am_appointment_column_content($column, $post_id) {
+add_action('manage_vz-meeting_posts_custom_column', 'vz_am_meeting_column_content', 10, 2);
+function vz_am_meeting_column_content($column, $post_id) {
   if ($column === 'vz_am_calendar') {
     $calendar_id = get_post_meta($post_id, 'calendar_id', true);
     echo get_the_title($calendar_id);
@@ -276,10 +337,10 @@ function vz_am_appointment_column_content($column, $post_id) {
 }
 
 // add calendar filter
-add_action('restrict_manage_posts', 'vz_am_appointment_filter');
-function vz_am_appointment_filter() {
+add_action('restrict_manage_posts', 'vz_am_meeting_filter');
+function vz_am_meeting_filter() {
   global $typenow;
-  if ( $typenow === 'vz-appointment') {
+  if ( $typenow === 'vz-meeting') {
     $calendars = vz_get_calendars();
     echo '<select name="calendar_id">';
     echo '<option value="">'.__vz('All Calendars').'</option>';
@@ -317,10 +378,10 @@ function vz_get_calendars() {
   return $calendars;
 }
 
-add_filter('parse_query', 'vz_am_appointment_filter_query');
-function vz_am_appointment_filter_query($query) {
+add_filter('parse_query', 'vz_am_meeting_filter_query');
+function vz_am_meeting_filter_query($query) {
   global $typenow;
-  if ($typenow === 'vz-appointment' && is_admin()) {
+  if ($typenow === 'vz-meeting' && is_admin()) {
     $calendar_id = $_GET['calendar_id'] ?? '';
     if ($calendar_id) {
       $query->query_vars['meta_key'] = 'calendar_id';
@@ -348,17 +409,17 @@ function vz_am_appointment_filter_query($query) {
 
 
 // make the column sortable
-add_filter('manage_edit-vz-appointment_sortable_columns', 'vz_am_appointment_sortable_columns');
-function vz_am_appointment_sortable_columns($columns) {
+add_filter('manage_edit-vz-meeting_sortable_columns', 'vz_am_meeting_sortable_columns');
+function vz_am_meeting_sortable_columns($columns) {
   $columns['vz_am_calendar'] = 'vz_am_calendar';
   $columns['vz_am_date_time'] = 'vz_am_date_time';
   return $columns;
 }
 
-add_action('pre_get_posts', 'vz_am_appointment_sortable_columns_orderby');
-function vz_am_appointment_sortable_columns_orderby($query) {
+add_action('pre_get_posts', 'vz_am_meeting_sortable_columns_orderby');
+function vz_am_meeting_sortable_columns_orderby($query) {
   $post_type = $query->get('post_type');
-  if (!is_admin() || $post_type !== 'vz-appointment') {
+  if (!is_admin() || $post_type !== 'vz-meeting') {
     return;
   }
   $orderby = $query->get('orderby');

@@ -2,8 +2,8 @@ const { registerBlockType } = wp.blocks;
 const { __ } = wp.i18n;
 const { RichText } = wp.blockEditor;
 
-registerBlockType('vz-appointment-manager/calendar-view', {
-  title: __('Viroz Appointment Calendar', 'vz-appointment-manager'),
+registerBlockType('vz-meeting-manager/calendar-view', {
+  title: __('Viroz Meeting Calendar', 'vz-meeting-manager'),
   icon: 'calendar-alt',
   category: 'widgets',
   attributes: {

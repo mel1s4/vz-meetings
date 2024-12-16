@@ -30,11 +30,11 @@ register_post_type('vz-calendar', array(
   'map_meta_cap' => true,
 ));
 
-$invitation_slug = get_option('vz_am_invitation_slug', 'appointment');
-register_post_type('vz-am-invitation', array(
+$invitation_slug = get_option('vz_am_invitation_slug', 'meeting');
+register_post_type('vz-am-invite', array(
   'labels' => array(
-    'name' => __vz('Invitations'),
-    'singular_name' => __vz('Invitation'),
+    'name' => __vz('Invites'),
+    'singular_name' => __vz('Invite'),
   ),
   'public' => false,
   // has single
@@ -45,16 +45,16 @@ register_post_type('vz-am-invitation', array(
   'supports' => array('title'),
 ));
 
-$appointment_slug = get_option('vz_am_appointment_slug', 'appointment');
-register_post_type('vz-appointment', array(
+$meeting_slug = get_option('vz_am_meeting_slug', 'meeting');
+register_post_type('vz-meeting', array(
   'labels' => array(
-    'name' => __vz('Appointments'),
-    'singular_name' => __vz('Appointment'),
+    'name' => __vz('Meetings'),
+    'singular_name' => __vz('Meeting'),
   ),
   'public' => false,
   // has single
   'has_archive' => false,
-  'rewrite' => array('slug' => $appointment_slug),
+  'rewrite' => array('slug' => $meeting_slug),
   'show_ui' => true,	
   'show_in_menu' => 'vz_am_settings',
   'supports' => array('title'),

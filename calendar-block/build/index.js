@@ -192,7 +192,7 @@ function App({
   preview = false
 }) {
   const [previewMode, setPreviewMode] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(preview);
-  const [userAppointments, setUserAppointments] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
+  const [userMeetings, setUserMeetings] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
   const [selectedLanguage, setSelectedLanguage] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('es');
   const [timeSlotSize, setTimeSlotSize] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(30);
   const [calendarId, setCalendarId] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
@@ -239,7 +239,7 @@ function App({
       '15:48': true,
       '16:36': true
     };
-    const exampleAppointments = [{
+    const exampleMeetings = [{
       "id": 36,
       "date_time": "2024-12-18T23:00:00.000Z",
       "duration": "45"
@@ -257,7 +257,7 @@ function App({
     exampleTimeSlots[today.getFullYear()][today.getMonth() + 1] = {};
     exampleTimeSlots[today.getFullYear()][today.getMonth() + 1][today.getDate()] = exampleTimeSlot;
     setTimeSlots(exampleTimeSlots);
-    setUserAppointments(exampleAppointments);
+    setUserMeetings(exampleMeetings);
     if (window?.vz_calendar_view_params && !previewMode) {
       const {
         calendar_id,
@@ -267,7 +267,7 @@ function App({
         slot_size,
         language,
         rest_nonce,
-        appointments
+        meetings
       } = window.vz_calendar_view_params;
       setCalendarId(calendar_id);
       setRestUrl(rest_url);
@@ -279,7 +279,7 @@ function App({
       nmA[today.getFullYear() + '-' + (today.getMonth() + 1)] = availability?.available_days;
       setMonthAvailability(nmA);
       setTimeSlots(availability?.timeslots);
-      setUserAppointments(appointments);
+      setUserMeetings(meetings);
     }
   }, []);
   function selectedDateFormatted() {
@@ -499,17 +499,17 @@ function App({
     };
     try {
       setConfirmationIsLoading(true);
-      const response = await axios__WEBPACK_IMPORTED_MODULE_4__["default"].post(restUrl + 'vz-am/v1/confirm_appointment', data, {
+      const response = await axios__WEBPACK_IMPORTED_MODULE_4__["default"].post(restUrl + 'vz-am/v1/confirm_meeting', data, {
         headers: {
           'X-WP-Nonce': restNonce
         }
       });
       setPopup({
         open: true,
-        message: 'Your appointment has been confirmed.',
+        message: 'Your meeting has been confirmed.',
         type: 'success'
       });
-      setUserAppointments([...userAppointments, {
+      setUserMeetings([...userMeetings, {
         id: response.data.id,
         date_time: selectedTimeSlot,
         duration: timeSlotSize
@@ -553,31 +553,31 @@ function App({
   }
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("section", {
     className: `vz-time-slot-selection ${preview ? '--vz-is-preview' : ''}`,
-    children: [userAppointments.length > 0 && !previewMode && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
-      className: "vz-appointments-list",
+    children: [userMeetings.length > 0 && !previewMode && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
+      className: "vz-meetings-list",
       children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("h2", {
         className: "vz-am__title",
-        children: _vz('your-appointments')
+        children: _vz('your-meetings')
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("ul", {
-        children: userAppointments.map((appointment, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("li", {
+        children: userMeetings.map((meeting, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("li", {
           children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("article", {
-            className: "vz-am__user-appointment",
-            onMouseEnter: () => setHighlightedDateTime(appointment.date_time),
+            className: "vz-am__user-meeting",
+            onMouseEnter: () => setHighlightedDateTime(meeting.date_time),
             onMouseLeave: () => setHighlightedDateTime(null),
             children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("h3", {
-              children: getDateTimeInLocale(new Date(appointment.date_time), true)[0]
+              children: getDateTimeInLocale(new Date(meeting.date_time), true)[0]
             }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("p", {
               className: "week-time",
               children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("span", {
                 className: "weekday",
-                children: getDayOfWeek(new Date(appointment.date_time))
+                children: getDayOfWeek(new Date(meeting.date_time))
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("span", {
                 className: "time",
-                children: getDateTimeInLocale(new Date(appointment.date_time), true)[1]
+                children: getDateTimeInLocale(new Date(meeting.date_time), true)[1]
               })]
             }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("p", {
               className: "duration",
-              children: [_vz('duration'), ": ", appointment.duration, " ", _vz('minutes')]
+              children: [_vz('duration'), ": ", meeting.duration, " ", _vz('minutes')]
             })]
           })
         }, index))
@@ -634,7 +634,7 @@ function App({
           })
         }, index))
       }), timeslotsAreReady() && !Object.keys(timeSlots[selectedYear][selectedMonth + 1][selectedDay]).length && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("p", {
-        children: _vz('no-appointments')
+        children: _vz('no-meetings')
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("p", {
         className: "vz-am__visitor-timezone",
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("b", {
@@ -647,13 +647,13 @@ function App({
         }), " ", visitorTimeZone]
       })]
     }), (selectedTimeSlot || previewMode) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
-      className: "vz-appointment-confirmation",
+      className: "vz-meeting-confirmation",
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
         className: "vz-am__confirmation-box",
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("h2", {
-          children: _vz('appointment-confirmation')
+          children: _vz('meeting-confirmation')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("p", {
-          children: selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-appointment')}` : 'Please select a time slot for your appointment.'
+          children: selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-meeting')}` : 'Please select a time slot for your meeting.'
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("button", {
           disabled: confirmationIsLoading,
           className: "vz-am__confirmation-button",
@@ -5486,7 +5486,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/tru
   \***************************************************/
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"weekdays":{"en":"Sun,Mon,Tue,Wed,Thu,Fri,Sat","es":"Dom,Lun,Mar,Mie,Jue,Vie,Sab"},"weekdays_long":{"en":"Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday","es":"Domingo,Lunes,Martes,Miércoles,Jueves,Viernes,Sábado"},"months":{"en":"January,February,March,April,May,June,July,August,September,October,November,December","es":"Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"},"previous":{"en":"Previous","es":"Anterior"},"next":{"en":"Next","es":"Siguiente"},"date":{"en":"Date","es":"Fecha"},"time":{"en":"Time","es":"Hora"},"location":{"en":"Location","es":"Ubicación"},"description":{"en":"Description","es":"Descripción"},"confirm":{"en":"Confirm Appointment","es":"Confirmar Cita"},"cancel":{"en":"Cancel","es":"Cancelar"},"you-selected":{"en":"You have selected","es":"Usted seleccionó"},"for-appointment":{"en":"for your appointment","es":"para su cita"},"minutes-per-slot":{"en":"minutes per slot","es":"minutos por cita"},"appointment-confirmation":{"en":"Appointment Confirmation","es":"Confirmar datos de su cita"},"loading":{"en":"Loading...","es":"Cargando..."},"no-appointments":{"en":"No appointments available","es":"No hay citas disponibles"},"your-timezone-is":{"en":"Current Timezone:","es":"Zona Horaria Actual:"},"website-timezone-is":{"en":"Website timezone:","es":"Zona Horaria del Sitio:"},"select-timezone":{"en":"Select your timezone","es":"Seleccione su zona horaria"},"your-appointments":{"en":"Your Appointments","es":"Tus Citas"},"duration":{"en":"Duration","es":"Duración"},"minutes":{"en":"minutes","es":"minutos"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"weekdays":{"en":"Sun,Mon,Tue,Wed,Thu,Fri,Sat","es":"Dom,Lun,Mar,Mie,Jue,Vie,Sab"},"weekdays_long":{"en":"Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday","es":"Domingo,Lunes,Martes,Miércoles,Jueves,Viernes,Sábado"},"months":{"en":"January,February,March,April,May,June,July,August,September,October,November,December","es":"Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"},"previous":{"en":"Previous","es":"Anterior"},"next":{"en":"Next","es":"Siguiente"},"date":{"en":"Date","es":"Fecha"},"time":{"en":"Time","es":"Hora"},"location":{"en":"Location","es":"Ubicación"},"description":{"en":"Description","es":"Descripción"},"confirm":{"en":"Confirm Meeting","es":"Confirmar Cita"},"cancel":{"en":"Cancel","es":"Cancelar"},"you-selected":{"en":"You have selected","es":"Usted seleccionó"},"for-meeting":{"en":"for your meeting","es":"para su cita"},"minutes-per-slot":{"en":"minutes per slot","es":"minutos por cita"},"meeting-confirmation":{"en":"Meeting Confirmation","es":"Confirmar datos de su cita"},"loading":{"en":"Loading...","es":"Cargando..."},"no-meetings":{"en":"No meetings available","es":"No hay citas disponibles"},"your-timezone-is":{"en":"Current Timezone:","es":"Zona Horaria Actual:"},"website-timezone-is":{"en":"Website timezone:","es":"Zona Horaria del Sitio:"},"select-timezone":{"en":"Select your timezone","es":"Seleccione su zona horaria"},"your-meetings":{"en":"Your Meetings","es":"Tus Citas"},"duration":{"en":"Duration","es":"Duración"},"minutes":{"en":"minutes","es":"minutos"}}');
 
 /***/ })
 

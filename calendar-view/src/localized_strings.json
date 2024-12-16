@@ -36,7 +36,7 @@
     "es": "Descripción"
   },
   "confirm": {
-    "en": "Confirm Appointment",
+    "en": "Confirm Meeting",
     "es": "Confirmar Cita"
   },
   "cancel": {
@@ -47,24 +47,24 @@
     "en": "You have selected",
     "es": "Usted seleccionó"
   },
-  "for-appointment": {
-    "en": "for your appointment",
+  "for-meeting": {
+    "en": "for your meeting",
     "es": "para su cita"
   },
   "minutes-per-slot": {
     "en": "minutes per slot",
     "es": "minutos por cita"
   },
-  "appointment-confirmation": {
-    "en": "Appointment Confirmation",
+  "meeting-confirmation": {
+    "en": "Meeting Confirmation",
     "es": "Confirmar datos de su cita"
   },
   "loading": {
     "en": "Loading...",
     "es": "Cargando..."
   },
-  "no-appointments": {
-    "en": "No appointments available",
+  "no-meetings": {
+    "en": "No meetings available",
     "es": "No hay citas disponibles"
   },
   "your-timezone-is": {
@@ -79,8 +79,8 @@
     "en": "Select your timezone",
     "es": "Seleccione su zona horaria"
   },
-  "your-appointments": {
-    "en": "Your Appointments",
+  "your-meetings": {
+    "en": "Your Meetings",
     "es": "Tus Citas"
   },
   "duration": {

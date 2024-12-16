@@ -11,28 +11,28 @@ function vz_am_register_rest_routes() {
     'methods' => 'GET',
     'callback' => 'vz_am_timeslots',
   ));
-  register_rest_route('vz-am/v1', '/confirm_appointment', array(
+  register_rest_route('vz-am/v1', '/confirm_meeting', array(
     'methods' => 'POST',
-    'callback' => 'vz_am_confirm_appointment',
+    'callback' => 'vz_am_confirm_meeting',
   ));
-  register_rest_route('vz-am/v1', '/create_invitation', array(
+  register_rest_route('vz-am/v1', '/create_invite', array(
     'methods' => 'POST',
-    'callback' => 'vz_am_create_calendar_invitation',
+    'callback' => 'vz_am_create_calendar_invite',
   ));
 }
 
-function vz_create_appointment_title($appointment) {
-  $calendar = get_post($appointment['calendar_id']);
+function vz_create_meeting_title($meeting) {
+  $calendar = get_post($meeting['calendar_id']);
   $calendar_title = $calendar->post_title;
-  $date_time = new DateTime($appointment['date_time']);
+  $date_time = new DateTime($meeting['date_time']);
   $date_time_str = $date_time->format('Y-m-d H:i');
   // user name
-  $user = get_user_by('id', $appointment['user_id']);
+  $user = get_user_by('id', $meeting['user_id']);
   $user_name = $user->display_name;
   return "$user_name | $date_time_str";
 }
 
-function vz_am_confirm_appointment($request) {
+function vz_am_confirm_meeting($request) {
   $params = $request->get_params();
   $nonce = $request->get_header('X-WP-Nonce'); // Get the nonce from the request header
   if (!wp_verify_nonce($nonce, 'wp_rest')) {
@@ -42,25 +42,25 @@ function vz_am_confirm_appointment($request) {
   $selected_time_slot = $request->get_param('date_time');
   $duration = get_post_meta($calendar_id, 'vz_am_duration', true);
  
-  $new_appointment = [
+  $new_meeting = [
     'date_time' => $selected_time_slot,
     'duration' => $duration,
     'user_id' => get_current_user_id(),
     'calendar_id' => $calendar_id, 
   ];
-  $new_appointment_id = wp_insert_post([
-    'post_type' => 'vz-appointment',
-    'post_title' => vz_create_appointment_title($new_appointment),
+  $new_meeting_id = wp_insert_post([
+    'post_type' => 'vz-meeting',
+    'post_title' => vz_create_meeting_title($new_meeting),
     'post_status' => 'publish',
   ]);
-  if (is_wp_error($new_appointment_id)) {
-    return new WP_Error('error', 'Error creating appointment', ['status' => 500]);
+  if (is_wp_error($new_meeting_id)) {
+    return new WP_Error('error', 'Error creating meeting', ['status' => 500]);
   }
-  foreach ($new_appointment as $key => $value) {
-    update_post_meta($new_appointment_id, $key, $value);
+  foreach ($new_meeting as $key => $value) {
+    update_post_meta($new_meeting_id, $key, $value);
   }
   return rest_ensure_response( [
-    'appointment' => $new_appointment_id,
+    'meeting' => $new_meeting_id,
   ]);
 }
 
@@ -290,9 +290,9 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
   }
 
 
-  // query the database for appointments 
+  // query the database for meetings 
   $args = [
-    'post_type' => 'vz-appointment',
+    'post_type' => 'vz-meeting',
     'posts_per_page' => -1,
     'fields' => 'ids',
     'meta_query' => [
@@ -313,11 +313,11 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
     ],
   ];
 
-  // remove appointments from timeslots
-  $appointments_ids = get_posts($args);
-  if (!empty($appointments_ids)) {
-    foreach ($appointments as $appointment) {
-      $date_time = new DateTime(get_post_meta($appointment->ID, 'date_time', true));
+  // remove meetings from timeslots
+  $meetings_ids = get_posts($args);
+  if (!empty($meetings_ids)) {
+    foreach ($meetings as $meeting) {
+      $date_time = new DateTime(get_post_meta($meeting->ID, 'date_time', true));
       $start = $date_time->format('H:i');
       $end = $date_time->add(new DateInterval('PT' . $slot_total_duration . 'M'))->format('H:i');
       foreach ($timeslots as $time => $available) {
@@ -339,20 +339,26 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
   return $timeslots;
 }
 
-function vz_am_create_calendar_invitation($request) {
+function vz_am_create_calendar_invite($request) {
   $params = $request->get_params();
   $nonce = $request->get_header('X-WP-Nonce'); // Get the nonce from the request header
   if (!wp_verify_nonce($nonce, 'wp_rest')) {
     return new WP_Error('invalid_nonce', 'Invalid nonce', ['status' => 403]);
   }
+  if (!current_user_can('edit_posts')) {
+    return new WP_Error('unauthorized', 'Unauthorized', ['status' => 403]);
+  }
   $calendar_id = $request->get_param('calendar_id');
-  
-  $new_invitation = [
-    'calendar_id' => $calendar_id,
-  ];
-  $new_invitation_id = wp_insert_post([
-    'post_type' => 'vz-am-invitation',
-    'post_title' => get_the_title($calendar_id),
-    'post_status' => 'publish',
-  ]);
+  // add the invite as metadata to the calendar
+  $invite_details = [
+    'created_at' => date('Y-m-d H:i:s'),
+    'created_by' => get_current_user_id(),
+    'random_id' => wp_generate_password(12, false),
+  ];  
+  $invites = get_post_meta($calendar_id, 'vz_am_invites', true);
+  if (!$invites) {
+    $invites = [];
+  }
+  $invites[] = $invite_details;
+  update_post_meta($calendar_id, 'vz_am_invites', $invites);
 }

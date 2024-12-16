@@ -253,13 +253,13 @@
   color: #059;
 }
 
-.vz-appointment-confirmation {
+.vz-meeting-confirmation {
   flex-grow: 1;
   width: -webkit-fill-available;
   width: -moz-available;
   width: stretch;
 }
-.vz-appointment-confirmation .vz-am__confirmation-box {
+.vz-meeting-confirmation .vz-am__confirmation-box {
   padding: 1em;
   border: 1px solid #00bbee;
   border-radius: 0.5em;
@@ -274,13 +274,13 @@
   width: 100%;
   max-width: 35em;
 }
-.vz-appointment-confirmation .vz-am__confirmation-box h2 {
+.vz-meeting-confirmation .vz-am__confirmation-box h2 {
   margin: 0;
 }
-.vz-appointment-confirmation .vz-am__confirmation-box p {
+.vz-meeting-confirmation .vz-am__confirmation-box p {
   margin: 0;
 }
-.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button {
+.vz-meeting-confirmation .vz-am__confirmation-box .vz-am__confirmation-button {
   display: block;
   font-size: 1em;
   padding: 0.5em 1em;
@@ -293,10 +293,10 @@
   position: relative;
   overflow: hidden;
 }
-.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button:hover {
+.vz-meeting-confirmation .vz-am__confirmation-box .vz-am__confirmation-button:hover {
   background-color: #059;
 }
-.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled] {
+.vz-meeting-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled] {
   background-color: #ccc;
   color: #666;
   pointer-events: none;
@@ -306,7 +306,7 @@
   height: 2em;
   padding: 0;
 }
-.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled]:after {
+.vz-meeting-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled]:after {
   content: "";
   display: block;
   width: 0.8em;
@@ -320,7 +320,7 @@
   border-radius: 50%;
   box-shadow: 0px 0px 1em rgba(0, 0, 0, 0.8);
 }
-.vz-appointment-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled]:before {
+.vz-meeting-confirmation .vz-am__confirmation-box .vz-am__confirmation-button[disabled]:before {
   z-index: 1;
   content: "";
   position: absolute;
@@ -342,13 +342,13 @@
     transform: translate(-50%, -50%) rotate(360deg);
   }
 }
-.vz-appointments-list {
+.vz-meetings-list {
   width: -webkit-fill-available;
   width: -moz-available;
   width: stretch;
   max-width: 35em;
 }
-.vz-appointments-list ul {
+.vz-meetings-list ul {
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -356,7 +356,7 @@
   list-style: none;
 }
 
-.vz-am__user-appointment {
+.vz-am__user-meeting {
   padding: 0.3em 0.8em;
   display: flex;
   justify-content: space-between;
@@ -367,26 +367,26 @@
   margin-bottom: 0.5em;
   cursor: default;
 }
-.vz-am__user-appointment h3 {
+.vz-am__user-meeting h3 {
   margin: 0;
   padding: 0;
   font-weight: normal;
   font-size: 1em;
   color: #333;
 }
-.vz-am__user-appointment p {
+.vz-am__user-meeting p {
   color: #666;
   margin: 0;
 }
-.vz-am__user-appointment .week-time {
+.vz-am__user-meeting .week-time {
   display: inline-flex;
   justify-content: space-between;
   gap: 0.5em;
 }
-.vz-am__user-appointment .weekday {
+.vz-am__user-meeting .weekday {
   font-style: italic;
 }
-.vz-am__user-appointment .time {
+.vz-am__user-meeting .time {
   font-weight: bold;
   color: #059;
 }

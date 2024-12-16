@@ -6,7 +6,7 @@ import localizedStrings from './localized_strings.json';
 
 function App({ preview = false }) {
   const [previewMode, setPreviewMode] = useState(preview);
-  const [userAppointments, setUserAppointments] = useState([]);
+  const [userMeetings, setUserMeetings] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState('es');
   const [timeSlotSize, setTimeSlotSize] = useState(30);
   const [calendarId, setCalendarId] = useState(null);
@@ -57,7 +57,7 @@ function App({ preview = false }) {
       '15:48': true,
       '16:36': true,
     };
-    const exampleAppointments = [
+    const exampleMeetings = [
         {
             "id": 36,
             "date_time": "2024-12-18T23:00:00.000Z",
@@ -79,7 +79,7 @@ function App({ preview = false }) {
     exampleTimeSlots[today.getFullYear()][today.getMonth() + 1] = {};
     exampleTimeSlots[today.getFullYear()][today.getMonth() + 1][today.getDate()] = exampleTimeSlot;
     setTimeSlots(exampleTimeSlots);
-    setUserAppointments(exampleAppointments);
+    setUserMeetings(exampleMeetings);
     if (window?.vz_calendar_view_params && !previewMode) {
       const { 
         calendar_id,
@@ -89,7 +89,7 @@ function App({ preview = false }) {
         slot_size,
         language,
         rest_nonce,
-        appointments,
+        meetings,
        } = window.vz_calendar_view_params;
         setCalendarId(calendar_id);
         setRestUrl(rest_url);
@@ -101,7 +101,7 @@ function App({ preview = false }) {
         nmA[today.getFullYear() + '-' + (today.getMonth() + 1)] = availability?.available_days;
         setMonthAvailability(nmA);
         setTimeSlots(availability?.timeslots);
-        setUserAppointments(appointments);
+        setUserMeetings(meetings);
     }
   }, []);
 
@@ -330,17 +330,17 @@ function App({ preview = false }) {
     };
     try {
       setConfirmationIsLoading(true);
-      const response = await axios.post( restUrl + 'vz-am/v1/confirm_appointment', data, {
+      const response = await axios.post( restUrl + 'vz-am/v1/confirm_meeting', data, {
         headers: {
           'X-WP-Nonce': restNonce
         }
       });
       setPopup({
         open: true,
-        message: 'Your appointment has been confirmed.',
+        message: 'Your meeting has been confirmed.',
         type: 'success'
       });
-      setUserAppointments([...userAppointments, {
+      setUserMeetings([...userMeetings, {
         id: response.data.id,
         date_time: selectedTimeSlot,
         duration: timeSlotSize
@@ -384,23 +384,23 @@ function App({ preview = false }) {
   return (
     <section className={`vz-time-slot-selection ${preview ? '--vz-is-preview' : ''}`}>
 
-      {(userAppointments.length > 0 && !previewMode) && (
-        <div className="vz-appointments-list">
-          <h2 className="vz-am__title">{_vz('your-appointments')}</h2>
+      {(userMeetings.length > 0 && !previewMode) && (
+        <div className="vz-meetings-list">
+          <h2 className="vz-am__title">{_vz('your-meetings')}</h2>
           <ul>
-            {userAppointments.map((appointment, index) => (
+            {userMeetings.map((meeting, index) => (
               <li key={index}>
-                <article className="vz-am__user-appointment"
-                          onMouseEnter={() => setHighlightedDateTime(appointment.date_time)}
+                <article className="vz-am__user-meeting"
+                          onMouseEnter={() => setHighlightedDateTime(meeting.date_time)}
                           onMouseLeave={() => setHighlightedDateTime(null)}
                           >
-                  <h3>{getDateTimeInLocale(new Date(appointment.date_time), true)[0]}</h3>
+                  <h3>{getDateTimeInLocale(new Date(meeting.date_time), true)[0]}</h3>
                   <p className="week-time">
-                    <span className="weekday">{getDayOfWeek(new Date(appointment.date_time))}</span>
-                    <span className="time">{getDateTimeInLocale(new Date(appointment.date_time), true)[1]}</span>
+                    <span className="weekday">{getDayOfWeek(new Date(meeting.date_time))}</span>
+                    <span className="time">{getDateTimeInLocale(new Date(meeting.date_time), true)[1]}</span>
                   </p>
                   <p className="duration">
-                    {_vz('duration')}: {appointment.duration} {_vz('minutes')}
+                    {_vz('duration')}: {meeting.duration} {_vz('minutes')}
                   </p>
                 </article>
               </li>
@@ -481,7 +481,7 @@ function App({ preview = false }) {
         { timeslotsAreReady() && 
           !Object.keys(timeSlots[selectedYear][selectedMonth + 1][selectedDay]).length && (
               <p>
-                {_vz('no-appointments')}
+                {_vz('no-meetings')}
               </p>
         )}
 
@@ -495,13 +495,13 @@ function App({ preview = false }) {
       {
         (
           (selectedTimeSlot || previewMode) &&
-          <div className="vz-appointment-confirmation">
+          <div className="vz-meeting-confirmation">
             <div className="vz-am__confirmation-box">
               <h2>
-                {_vz('appointment-confirmation')}
+                {_vz('meeting-confirmation')}
               </h2>
               <p>
-                {selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-appointment')}` : 'Please select a time slot for your appointment.'}
+                {selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-meeting')}` : 'Please select a time slot for your meeting.'}
               </p>
               <button 
                 disabled={confirmationIsLoading}

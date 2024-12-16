@@ -313,7 +313,7 @@ function App() {
         
         <input type="hidden"
                 value={valuesAsJson()}
-                name="vz-appointments-availability-rules"
+                name="vz-meetings-availability-rules"
                  />
     </section>
     </div>
