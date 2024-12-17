@@ -225,6 +225,12 @@ function vz_am_calendar_options_content($post) {
   $rest = get_post_meta($post->ID, 'vz_am_rest', true);
   echo '<label for="vz_am_rest">' . __vz('Rest between meetings') . '</label>';
   echo '<input type="number" id="vz_am_rest" name="vz_am_rest" value="' . $rest . '">';
+
+  $invitations = get_post_meta($post->ID, 'vz_am_invitations', true);
+  if (!$invitations) {
+    $invitations = [];
+  }
+  print_x($invitations);
 }
 
 add_action('save_post', 'vz_am_save_calendar_options');

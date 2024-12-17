@@ -1,20 +1,37 @@
 import { useState } from 'react';
 import TotalTimeInput from './totalTimeInput';
 import './calendarOptions.scss';
+import axios from 'axios';
+
 function CalendarOptions () {
   const [vz_am_duration, setVz_am_duration] = useState(70);
   const [vz_am_rest, setVz_am_rest] = useState(10);
   const [calendarIsEnabled, setCalendarIsEnabled] = useState(true);
   const [userCanSchedueXDaysInAdvance, setUserCanSchedueXDaysInAdvance] = useState(60);
   const [requiresInvite, setRequiresInvite] = useState(true);
+  const [copyLinkIsLoading, setCopyLinkIsLoading] = useState(false);
+  const [restUrl, setRestUrl] = useState('http://localhost/wp-json/');
+  const [restNonce, setRestNonce] = useState('');
+  const [calendarId, setCalendarId] = useState(19);
 
   async function copyInviteLink(e) {
     e.preventDefault();
     // add to clipboard
     const link = "example";
     try {
-      await navigator.clipboard.writeText(link);
-      console.log('Page URL copied to clipboard');
+      setCopyLinkIsLoading(true);
+      const data = {
+        calendar_id: calendarId
+      };
+      const response = await axios.get( restUrl + 'vz-am/v1/confirm_meeting', data, {
+        // headers: {
+        //   'X-WP-Nonce': restNonce
+        // }
+      });
+      console.log(response);
+
+      // await navigator.clipboard.writeText(link);
+      // console.log('Page URL copied to clipboard');
     } catch(e) {
       console.log('Failed to copy page URL to clipboard');
     }

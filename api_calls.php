@@ -16,7 +16,7 @@ function vz_am_register_rest_routes() {
     'callback' => 'vz_am_confirm_meeting',
   ));
   register_rest_route('vz-am/v1', '/create_invite', array(
-    'methods' => 'POST',
+    'methods' => 'GET',
     'callback' => 'vz_am_create_calendar_invite',
   ));
 }
@@ -339,26 +339,35 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
   return $timeslots;
 }
 
-function vz_am_create_calendar_invite($request) {
+function vz_am_create_calendar_invite($calendar_id) {
+  return rest_ensure_response( [
+    'invite' => 'created',
+  ]);
+
   $params = $request->get_params();
-  $nonce = $request->get_header('X-WP-Nonce'); // Get the nonce from the request header
-  if (!wp_verify_nonce($nonce, 'wp_rest')) {
-    return new WP_Error('invalid_nonce', 'Invalid nonce', ['status' => 403]);
-  }
-  if (!current_user_can('edit_posts')) {
-    return new WP_Error('unauthorized', 'Unauthorized', ['status' => 403]);
-  }
+  // $nonce = $request->get_header('X-WP-Nonce'); // Get the nonce from the request header
+  // if (!wp_verify_nonce($nonce, 'wp_rest')) {
+  //   return new WP_Error('invalid_nonce', 'Invalid nonce', ['status' => 403]);
+  // }
+  // if (!current_user_can('edit_posts')) {
+  //   return new WP_Error('unauthorized', 'Unauthorized', ['status' => 403]);
+  // }
   $calendar_id = $request->get_param('calendar_id');
   // add the invite as metadata to the calendar
+  // the uppercase php function is uppercase(
+  $random_id = strtoupper(wp_generate_password(5, false));
   $invite_details = [
-    'created_at' => date('Y-m-d H:i:s'),
-    'created_by' => get_current_user_id(),
-    'random_id' => wp_generate_password(12, false),
+    'calendar_id' => $calendar_id,
+    'random_id' => $random_id,
   ];  
-  $invites = get_post_meta($calendar_id, 'vz_am_invites', true);
-  if (!$invites) {
-    $invites = [];
-  }
-  $invites[] = $invite_details;
-  update_post_meta($calendar_id, 'vz_am_invites', $invites);
+  
+  $invite_id = wp_insert_post([
+    'post_type' => 'vz-am-invite',
+    'post_title' => 'Invite ' . $invite_details['random_id'],
+    'post_status' => 'publish',
+  ]);
+
+  return rest_ensure_response( [
+    'invite' => $invite_details,
+  ]);
 }
