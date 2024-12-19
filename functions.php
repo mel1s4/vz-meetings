@@ -3,7 +3,7 @@
 Plugin Name: Viroz Meeting Manager
 Plugin URI: https://viroz.studio/vz-meeting-manager
 Description: This plugin will help you to sell and manage your meetings for services and products.
-Version: 0.0.1
+Version: 0.0.2
 Author: Melisa Viroz
 Author URI: https://melisaviroz.com
 License: GPL2
