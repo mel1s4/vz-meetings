@@ -10,6 +10,16 @@ body {
   }
 }
 
+.vz-availability-rules__wrapper {
+  input {
+    font-size: 1em;
+    padding: 0.5em 1em;
+    border: 1px solid #ccc;
+    text-align: right;
+    border-radius: 0.5em;
+  }
+}
+
 .vz-availability-rule {
   display: flex;
   flex-wrap: wrap;

@@ -1,0 +1,51 @@
+.vz-meetings-list {
+  width: stretch;
+  max-width: 35em;
+  .vz-am__title {
+
+  }
+  ul {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+}
+
+.vz-am__user-meeting {
+  padding: 0.3em 0.8em;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5em 1em;
+  border: 1px solid #DDD;
+  border-radius: 0.5em;
+  background-color: #FAFAFA;
+  margin-bottom: 0.5em;
+  cursor: default;
+  h3 {
+    margin: 0;
+    padding: 0;
+    font-weight: normal;
+    font-size: 1em;
+    color: #333;
+  }
+  p {
+    color: #666;
+    margin: 0;
+  }
+  .week-time {
+    display: inline-flex;
+    justify-content: space-between;
+    gap: 0.5em;
+  }
+  .weekday {
+    font-style: italic;
+  }
+  .time {
+    font-weight: bold;
+    color: #059;
+
+  }
+}

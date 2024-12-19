@@ -3,6 +3,7 @@ import React, { use, useState, useEffect } from 'react';
 import CalendarOptions from './calendarOption';
 function App() {
   const [timeZone, setTimeZone] = useState('');
+  const [calendarId, setCalendarId] = useState(0);
   const availabilityRuleTemplate = {
     id: 0, 
     name: 'New Rule',
@@ -33,6 +34,13 @@ function App() {
       value: "between-dates",
     },
   ];
+  const [maxDaysInAdvance, setMaxDaysInAdvance] = useState(0);
+  const [Rest, setRest] = useState(0);
+  const [Duration, setDuration] = useState(0);
+  const [calendarEnabled, setCalendarEnabled] = useState(false);
+  const [requiresInvite, setRequiresInvite] = useState(false);
+  const [restUrl, setRestUrl] = useState('');
+  const [restNonce, setRestNonce] = useState('');
 
   function moveRule(e, direction, id) {
     e.preventDefault();
@@ -124,14 +132,37 @@ function App() {
 
   useEffect(() => {
     if (window?.vz_availability_rules_params) {
+      console.log(window.vz_availability_rules_params);
       setAvailabilityRules(window.vz_availability_rules_params.availability_rules);
       setTimeZone(window.vz_availability_rules_params.time_zone);
+      setMaxDaysInAdvance(window.vz_availability_rules_params.maximum_days_in_advance);
+      setRest(parseInt(window.vz_availability_rules_params.meeting_rest));
+      setDuration(parseInt(window.vz_availability_rules_params.meeting_duration));
+      setCalendarEnabled(window.vz_availability_rules_params.enabled);
+      setRequiresInvite(window.vz_availability_rules_params.requires_invite);
+      setRestUrl(window.vz_availability_rules_params.rest_url);
+      setRestNonce(window.vz_availability_rules_params.rest_nonce);
+      setCalendarId(window.vz_availability_rules_params.calendar_id);
     }
-  }
-  , []);
+  } , []);
   return (
-      <div>
-      <CalendarOptions />
+      <div className="vz-availability-rules__wrapper">
+      <CalendarOptions
+        maxDaysInAdvance={maxDaysInAdvance}
+        setMaxDaysInAdvance={setMaxDaysInAdvance}
+        Rest={Rest}
+        setRest={setRest}
+        Duration={Duration}
+        setDuration={setDuration}
+        calendarEnabled={calendarEnabled}
+        setCalendarEnabled={setCalendarEnabled}
+        requiresInvite={requiresInvite}
+        setRequiresInvite={setRequiresInvite}
+        restUrl={restUrl}
+        setRestUrl={setRestUrl}
+        restNonce={restNonce}
+        calendarId={calendarId}
+      />
       <section className="vz-availability-rules">
         <header className="vz-am__header">
           <h2>

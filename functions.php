@@ -37,6 +37,12 @@ function vz_am_enqueue_styles() {
       'availability_rules' => JSON_decode($availability_rules),
       'time_zone' => get_option('timezone_string'),
       'endpoint_domain' => get_rest_url(),
+      'meeting_duration' => get_post_meta(get_the_ID(), 'vz_am_duration', true),
+      'meeting_rest' => get_post_meta(get_the_ID(), 'vz_am_rest', true),
+      'maximum_days_in_advance' => get_post_meta(get_the_ID(), 'vz_am_maximum_days_in_advance', true),
+      'enabled' => get_post_meta(get_the_ID(), 'vz_am_enabled', true),
+      'requires_invite' => get_post_meta(get_the_ID(), 'vz_am_requires_invite', true),
+      'calendar_id' => get_the_ID(),
     ];
     wp_localize_script('vz-availability-rules', 'vz_availability_rules_params', $params);
   }
@@ -128,16 +134,6 @@ function vz_am_enqueue_calendar_scripts() {
 
 function vz_am_calendar_options() {
   add_meta_box(
-    'vz_am_calendar_options',
-    __vz('Calendar Options'),
-    'vz_am_calendar_options_content',
-    'vz-calendar',
-    'normal',
-    'default'
-  );
-
-  // add an option called "Rules of Availability" where the user can set the days and hours of availability
-  add_meta_box(
     'vz_am_availability_options',
     __vz('Availability Rules'),
     'vz_am_availability_options_content',
@@ -218,21 +214,6 @@ function vz_am_availability_options_content($post) {
   <?php 
 }
 
-function vz_am_calendar_options_content($post) {
-  $duration = get_post_meta($post->ID, 'vz_am_duration', true);
-  echo '<label for="vz_am_duration">' . __vz('Minimum meeting size in minutes') . '</label>';
-  echo '<input type="number" id="vz_am_duration" name="vz_am_duration" value="' . $duration . '">';
-  $rest = get_post_meta($post->ID, 'vz_am_rest', true);
-  echo '<label for="vz_am_rest">' . __vz('Rest between meetings') . '</label>';
-  echo '<input type="number" id="vz_am_rest" name="vz_am_rest" value="' . $rest . '">';
-
-  $invitations = get_post_meta($post->ID, 'vz_am_invitations', true);
-  if (!$invitations) {
-    $invitations = [];
-  }
-  print_x($invitations);
-}
-
 add_action('save_post', 'vz_am_save_calendar_options');
 function vz_am_save_calendar_options($post_id) {
   if (get_post_type($post_id) !== 'vz-calendar') {
@@ -257,6 +238,27 @@ function vz_am_save_calendar_options($post_id) {
       $post_id,
       'vz_availability_rules',
       $_POST['vz-meetings-availability-rules']
+    );
+  }
+  if (array_key_exists('vz_am_maximum_days_in_advance', $_POST)) {
+    update_post_meta(
+      $post_id,
+      'vz_am_maximum_days_in_advance',
+      $_POST['vz_am_maximum_days_in_advance']
+    );
+  }
+  if (array_key_exists('vz_am_enabled', $_POST)) {
+    update_post_meta(
+      $post_id,
+      'vz_am_enabled',
+      $_POST['vz_am_enabled']
+    );
+  }
+  if (array_key_exists('vz_am_requires_invite', $_POST)) {
+    update_post_meta(
+      $post_id,
+      'vz_am_requires_invite',
+      $_POST['vz_am_requires_invite']
     );
   }
 }

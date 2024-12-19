@@ -1,19 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TotalTimeInput from './totalTimeInput';
 import './calendarOptions.scss';
 import axios from 'axios';
 
-function CalendarOptions () {
-  const [vz_am_duration, setVz_am_duration] = useState(70);
-  const [vz_am_rest, setVz_am_rest] = useState(10);
-  const [calendarIsEnabled, setCalendarIsEnabled] = useState(true);
-  const [userCanSchedueXDaysInAdvance, setUserCanSchedueXDaysInAdvance] = useState(60);
-  const [requiresInvite, setRequiresInvite] = useState(true);
+function CalendarOptions ({
+  maxDaysInAdvance,
+  setMaxDaysInAdvance,
+  Rest,
+  setRest,
+  Duration, 
+  setDuration,
+  calendarEnabled,
+  setCalendarEnabled,
+  requiresInvite,
+  setRequiresInvite,
+  restUrl,
+  setRestUrl,
+  restNonce,
+  calendarId,
+}) {
   const [copyLinkIsLoading, setCopyLinkIsLoading] = useState(false);
-  const [restUrl, setRestUrl] = useState('http://localhost/wp-json/');
-  const [restNonce, setRestNonce] = useState('');
-  const [calendarId, setCalendarId] = useState(19);
-
   async function copyInviteLink(e) {
     e.preventDefault();
     // add to clipboard
@@ -50,7 +56,9 @@ function CalendarOptions () {
           </label>
           <label className="vz-toggle-switch">
             <input type="checkbox"
-                  name="vz-am__enable-calendar" />
+                  onClick={e => setCalendarEnabled(e.target.checked)}
+                  checked={calendarEnabled}
+                  name="vz_am_enabled" />
               <span>
                 Enable Calendar
               </span>
@@ -61,17 +69,27 @@ function CalendarOptions () {
           <label>
             Minimum Meeting Size
           </label>
-          <TotalTimeInput minutes={vz_am_duration}
-                          name="vz_am_calendar-duration"
-                          setMinutes={setVz_am_duration} />
+          <TotalTimeInput minutes={Duration}
+                          name="vz_am_duration"
+                          setMinutes={setDuration} />
         </div>
         <div className="vz-am__calendar-option">
           <label>
             Rest between meetings
           </label>
-          <TotalTimeInput minutes={vz_am_rest}
-                          name="vz_am_calendar-rest"
-                          setMinutes={setVz_am_rest} />
+          <TotalTimeInput minutes={Rest}
+                          name="vz_am_rest"
+                          setMinutes={setRest} />
+        </div>
+        <div className="vz-am__calendar-option max-days-in-advance">
+          <label>
+            Maximum days in advance
+          </label>
+          <input name="vz_am_maximum_days_in_advance"
+                type="number"
+                onChange={e => setMaxDaysInAdvance(e.target.value)}
+                value={maxDaysInAdvance}
+                 />
         </div>
 
         
@@ -84,7 +102,7 @@ function CalendarOptions () {
               <input type="checkbox"
                     onClick={e => setRequiresInvite(e.target.checked)}
                     checked={requiresInvite}
-                    name="vz-am__enable-calendar" />
+                    name="vz_am_requires_invite" />
                 <span>
                   Requires Invite 
                 </span>

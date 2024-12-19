@@ -96,6 +96,7 @@ function vz_am_month_availability($request) {
   // return vz_am_get_month_availability($calendar_id, $year, $month);
   return rest_ensure_response( [
     'available_days' => vz_am_get_month_availability($calendar_id, $year, $month),
+    'availability_rules' => JSON_decode(get_post_meta($calendar_id, 'vz_availability_rules', true)),
   ]);
 }
 
@@ -153,18 +154,23 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
         }
       }
     }
-    if ($rule->type === 'weekdays') {
+    
+
+
+    if ($rule->type === 'weekday') {
       $weekdays = $rule->weekdays;
       $start_date = new DateTime("$year-$month-01");
       $end_date = new DateTime("$year-$month-" . $start_date->format('t'));
+      // $end_date->add(new DateInterval('P1D'));
       $interval = new DateInterval('P1D');
-      $period = new DatePeriod($start_date, $interval, $end_date);
-      foreach ($period as $day) {
+      $period = new DatePeriod($start_date, $interval, $end_date, DatePeriod::INCLUDE_END_DATE);
+      foreach ($period as $day) { // this is not iterating to the last day of the month
         $week_day = $day->format('N');
         if (in_array($week_day, $weekdays)) {
           $available_days[$day->format('d')] = $available;
         }
       }
+
     }
   }
   ksort($available_days);
@@ -225,14 +231,19 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
         $rule_start_date = new DateTime($rule->startDate);
         $rule_end_date = new DateTime($rule->endDate);
         if ($day_date >= $rule_start_date && $day_date <= $rule_end_date) {
-            if (!$rule->showWeekdays || in_array($day_of_week, $rule->weekdays)) 
-              $availability_frames[$index] = vzFormatFrame($available);
-          }
+          if (!$rule->showWeekdays || in_array($day_of_week, $rule->weekdays)) 
+            $availability_frames[$index] = vzFormatFrame($available);
         }
+      }
+
+      // weekdays
+      if ($rule->type === 'weekday' && in_array($day_of_week, $rule->weekdays)) {
+        $availability_frames[] = vzFormatFrame($available);
+      }
     } else {
       $start_time = $rule->startTime;
       $end_time = $rule->endTime;
-      if ($rule->type === 'weekdays' && in_array($day_of_week, $rule->weekdays)) {
+      if ($rule->type === 'weekday' && in_array($day_of_week, $rule->weekdays)) {
         $availability_frames[] = vzFormatFrame($available, $start_time, $end_time);
       }
   

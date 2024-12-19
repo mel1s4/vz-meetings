@@ -36,7 +36,7 @@ export default function Edit() {
 	return (
     <p { ...useBlockProps() }>
       <div id="vz-calendar">
-        <Calendar preview />
+        <Calendar />
       </div>
     </p>
 	);

@@ -1,0 +1,79 @@
+
+.vz-time-slots {
+  width: fit-content;
+  max-width: 11em;
+
+  p {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .vz-am__visitor-timezone,
+  .vz-am__website-timezone {
+    font-size: 0.8em;
+    color: #666;
+    padding: 0.5em 0;
+    display: block;
+    b {
+      display: block;
+      font-weight: bold;
+      color: #666;
+    }
+  }
+}
+
+.vz-am__time-slots__list,
+.vz-am__loading-timeslots {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  width: min-content;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5em;
+
+  max-height: 12em;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.vz-am__loading-timeslots {
+  
+  li:before {
+    display: block;
+    content: "00:00";
+    color: transparent;
+    transition: all 0.3s;
+    font-size: 1em;
+    padding: 0.5em 1em;
+    border-radius: 1.5em;
+    background-color: #EAEAEA;
+    animation: blink 1s infinite;
+  }
+  li:nth-child(even):before {
+    animation-delay: -0.5s;	
+  }
+}
+
+.vz-am__time-slots__item {
+  margin: 0;
+  button {
+    transition: all 0.3s;
+    font-size: 1em;
+    padding: 0.5em 1em;
+    border: none;
+    border-radius: 1.5em;
+    background-color: transparent;
+    color: #333;
+    border: 1px solid #00bbee;
+    cursor: pointer;
+    font-weight: bold;
+    &:hover {
+      background-color: #00bbee;
+      color: white;
+    }
+    &.--selected {
+      background-color: #CCEEFF;
+      color: #059;
+    }
+  }
+}
