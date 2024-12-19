@@ -71,7 +71,8 @@
     }
   }
 
-  input[type="checkbox"]:checked + span {
+  input[type="checkbox"]:checked + span,
+  span.--active {
     background-color: #0be;
     &:after {
       transform: translate(-10%, -50%);
@@ -87,4 +88,10 @@
   cursor: pointer;
   background-color: transparent;
   color: #666;
+
+  [disabled=true] {
+    cursor: not-allowed;
+    background-color: #ccc;
+    border-color: #666;
+  }
 }

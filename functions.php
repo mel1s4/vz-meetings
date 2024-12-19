@@ -36,13 +36,14 @@ function vz_am_enqueue_styles() {
     $params = [
       'availability_rules' => JSON_decode($availability_rules),
       'time_zone' => get_option('timezone_string'),
-      'endpoint_domain' => get_rest_url(),
+      'rest_url' => get_rest_url(),
       'meeting_duration' => get_post_meta(get_the_ID(), 'vz_am_duration', true),
       'meeting_rest' => get_post_meta(get_the_ID(), 'vz_am_rest', true),
       'maximum_days_in_advance' => get_post_meta(get_the_ID(), 'vz_am_maximum_days_in_advance', true),
       'enabled' => get_post_meta(get_the_ID(), 'vz_am_enabled', true),
       'requires_invite' => get_post_meta(get_the_ID(), 'vz_am_requires_invite', true),
       'calendar_id' => get_the_ID(),
+      'rest_nonce' => wp_create_nonce('wp_rest'),
     ];
     wp_localize_script('vz-availability-rules', 'vz_availability_rules_params', $params);
   }
@@ -81,6 +82,7 @@ function vz_am_my_schedule_page_content() {
 add_action('wp_enqueue_scripts', 'vz_am_enqueue_calendar_scripts');
 function vz_am_enqueue_calendar_scripts() {
   global $post;
+  $id = $post->ID;
   // if is single vz-calendar post
   if (is_single() && $post->post_type === 'vz-calendar') {
     wp_enqueue_style('vz-calendar-view-styles', plugin_dir_url(__FILE__) . 'calendar-view/build/static/css/main.css', array(), '1.0.0', 'all');
@@ -94,7 +96,7 @@ function vz_am_enqueue_calendar_scripts() {
       'meta_query' => array(
         array(
           'key' => 'calendar_id',
-          'value' => get_the_ID(),
+          'value' => $id,
         ),
         array(
           'key' => 'user_id',
@@ -117,17 +119,37 @@ function vz_am_enqueue_calendar_scripts() {
     usort($meetings, function($a, $b) {
       return strtotime($a['date_time']) - strtotime($b['date_time']);
     });
+    $invite = $_GET['invite'] ?? '';
+
+    $tdate = explode('-', date('Y-m-d'));
     $params = [
-      'availability_rules' => JSON_decode(get_post_meta(get_the_ID(), 'vz_availability_rules', true)),
+      'availability_rules' => JSON_decode(get_post_meta($id, 'vz_availability_rules', true)),
       'time_zone' => get_option('timezone_string'),
-      'calendar_id' => get_the_ID(),
+      'calendar_id' => $id,
       'rest_nonce' => wp_create_nonce('wp_rest'),
       'rest_url' => get_rest_url(),
-      'slot_size' => get_post_meta(get_the_ID(), 'vz_am_duration', true),
-      'availability' => vzGetAvailability(get_the_ID()),
+      'slot_size' => get_post_meta($id, 'vz_am_duration', true),
+      'availability' => [],
+      'invite' => false,
       'language' => get_locale(),
       'meetings' => $meetings,
+      'invitation_code' => $_GET['invite'],
+      'requires_invite' => get_post_meta($id, 'vz_am_requires_invite', true),
     ];
+
+    $checked = vz_check_invite($id, $invite);
+    
+    if ($checked) {
+      $params['invite'] = $invite;
+      $year = $tdate[0];
+      $month = $tdate[1];
+      $params['availability'] = [
+        'available_days' => vz_am_get_month_availability($id, $year, $month),
+        'availability_rules' => JSON_decode(get_post_meta($id, 'vz_availability_rules', true)),
+      ];
+    }
+    
+
     wp_localize_script('vz-calendar-view', 'vz_calendar_view_params', $params);
   }
 }
@@ -439,5 +461,22 @@ function vz_am_meeting_sortable_columns_orderby($query) {
     $query->set('meta_key', 'date_time');
     $query->set('orderby', 'meta_value');
     $query->set('meta_type', 'DATE'); 
+  }
+}
+
+
+// add a cron job that removes invite links older than 48 hours
+add_action('vz_am_remove_old_invites', 'vz_am_remove_old_invites');
+function vz_am_remove_old_invites() {
+  $invites = get_posts(array(
+    'post_type' => 'vz-am-invite',
+    'numberposts' => -1,
+    'fields' => 'ids',
+    'date_query' => array(
+      'before' => '48 hours ago',
+    ),
+  ));
+  foreach ($invites as $invite) {
+    wp_delete_post($invite, true);
   }
 }

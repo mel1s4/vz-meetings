@@ -47,7 +47,7 @@ export default function TimeSlots({
 
 
   function timeslotsAreReady() {
-    return timeSlots[selectedYear] && timeSlots[selectedYear][selectedMonth + 1] && timeSlots[selectedYear][selectedMonth + 1][selectedDay];
+    return timeSlots && timeSlots[selectedYear] && timeSlots[selectedYear][selectedMonth + 1] && timeSlots[selectedYear][selectedMonth + 1][selectedDay];
   }
 
   function isSelectedTimeSlot(time) {

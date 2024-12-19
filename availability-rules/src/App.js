@@ -3,7 +3,7 @@ import React, { use, useState, useEffect } from 'react';
 import CalendarOptions from './calendarOption';
 function App() {
   const [timeZone, setTimeZone] = useState('');
-  const [calendarId, setCalendarId] = useState(0);
+  const [calendarId, setCalendarId] = useState(6);
   const availabilityRuleTemplate = {
     id: 0, 
     name: 'New Rule',
@@ -39,8 +39,6 @@ function App() {
   const [Duration, setDuration] = useState(0);
   const [calendarEnabled, setCalendarEnabled] = useState(false);
   const [requiresInvite, setRequiresInvite] = useState(false);
-  const [restUrl, setRestUrl] = useState('');
-  const [restNonce, setRestNonce] = useState('');
 
   function moveRule(e, direction, id) {
     e.preventDefault();
@@ -140,11 +138,10 @@ function App() {
       setDuration(parseInt(window.vz_availability_rules_params.meeting_duration));
       setCalendarEnabled(window.vz_availability_rules_params.enabled);
       setRequiresInvite(window.vz_availability_rules_params.requires_invite);
-      setRestUrl(window.vz_availability_rules_params.rest_url);
-      setRestNonce(window.vz_availability_rules_params.rest_nonce);
       setCalendarId(window.vz_availability_rules_params.calendar_id);
     }
   } , []);
+
   return (
       <div className="vz-availability-rules__wrapper">
       <CalendarOptions
@@ -158,9 +155,6 @@ function App() {
         setCalendarEnabled={setCalendarEnabled}
         requiresInvite={requiresInvite}
         setRequiresInvite={setRequiresInvite}
-        restUrl={restUrl}
-        setRestUrl={setRestUrl}
-        restNonce={restNonce}
         calendarId={calendarId}
       />
       <section className="vz-availability-rules">
@@ -232,7 +226,7 @@ function App() {
                                 name="include-time"
                                 value = "include-time"
                                 {
-                                  ...(!rule.includeTime ? {checked: true} : {})
+                                  ...(!rule.includeTime ? {defaultChecked: true} : {})
                                 }
                                 />
                           All day

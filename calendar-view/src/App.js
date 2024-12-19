@@ -24,6 +24,9 @@ function App({ preview = false }) {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [monthIsLoading, setMonthIsLoading] = useState({});
   const [timeSlotsAreLoading, setTimeSlotsAreLoading] = useState({});
+  const [invitationCode, setInvitationCode] = useState(null);
+  const [requiresInvite, setRequiresInvite] = useState(false);
+
   const [popup, setPopup] = useState({
     open: false,
     message: '',
@@ -90,6 +93,8 @@ function App({ preview = false }) {
         language,
         rest_nonce,
         meetings,
+        invitation_code,
+        requires_invite,
        } = window.vz_calendar_view_params;
         setCalendarId(calendar_id);
         setRestUrl(rest_url);
@@ -102,6 +107,8 @@ function App({ preview = false }) {
         setMonthAvailability(nmA);
         setTimeSlots(availability?.timeslots);
         setUserMeetings(meetings);
+        setInvitationCode(invitation_code);
+        setRequiresInvite(requires_invite);
     }
   }, []);
   
@@ -120,7 +127,7 @@ function App({ preview = false }) {
 
   async function getTimeSlots() {
     if (previewMode) return;
-    if (timeSlots[selectedYear] && timeSlots[selectedYear][selectedMonth + 1] && timeSlots[selectedYear][selectedMonth + 1][selectedDay]) {
+    if (timeSlots && timeSlots[selectedYear] && timeSlots[selectedYear][selectedMonth + 1] && timeSlots[selectedYear][selectedMonth + 1][selectedDay]) {
       return;
     }
     try {
@@ -133,9 +140,10 @@ function App({ preview = false }) {
         month: selectedMonth + 1,
         year: selectedYear,
         day: selectedDay,
-        calendar_id: calendarId
+        calendar_id: calendarId,
+        invite: invitationCode,
       };
-      const response = await axios.get( restUrl + 'vz-am/v1/timeslots', { params: getParams });
+      const response = await api('timeslots', getParams);
       const newTimeSlots = {
         ...timeSlots
       };
@@ -175,12 +183,13 @@ function App({ preview = false }) {
       const pLoadingMonths = { ...monthIsLoading };
       pLoadingMonths[selectedYear + '-' + (selectedMonth + 1)] = true;
       setMonthIsLoading(pLoadingMonths);
-      const getParams = {
+      const params = {
         year: selectedYear,
         month: selectedMonth + 1,
-        calendar_id: calendarId
+        calendar_id: calendarId,
+        invite: invitationCode,
       };
-      const response = await axios.get( restUrl + 'vz-am/v1/availability', { params: getParams });
+      const response = await api('availability', params);
       const newMonthAvailability = { ...monthAvailability };
       newMonthAvailability[selectedYear + '-' + (selectedMonth + 1)] = response.data.available_days;
       setMonthAvailability(newMonthAvailability);
@@ -221,6 +230,13 @@ function App({ preview = false }) {
     return _vz('weekdays_long').split(',')[date.getDay()];	
   }
 
+  async function api(endpoint, data) {
+    return await axios.post( restUrl + 'vz-am/v1/' + endpoint, data, {
+      headers: {
+        'X-WP-Nonce': restNonce
+      }
+    });
+  }
   
 
   async function confirmTimeSlot() {
@@ -229,14 +245,11 @@ function App({ preview = false }) {
       calendar_id: calendarId,
       date_time: selectedTimeSlot,
       nonce: restNonce,
+      invite: invitationCode,
     };
     try {
       setConfirmationIsLoading(true);
-      const response = await axios.post( restUrl + 'vz-am/v1/confirm_meeting', data, {
-        headers: {
-          'X-WP-Nonce': restNonce
-        }
-      });
+      const response = await api('confirm', data);
       setPopup({
         open: true,
         message: 'Your meeting has been confirmed.',
@@ -306,7 +319,6 @@ function App({ preview = false }) {
         timeSlotsAreLoading={timeSlotsAreLoading}
         timeZone={timeZone}
       />
-      {timeZone}
 
       {( (selectedTimeSlot || previewMode) &&
         <div className="vz-meeting-confirmation">
@@ -315,12 +327,12 @@ function App({ preview = false }) {
               {_vz('meeting-confirmation')}
             </h2>
             <p>
-              {selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-meeting')}` : 'Please select a time slot for your meeting.'}
+              {selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-meeting')}` : _vz('please-select-time-slot')}
             </p>
             <button 
               disabled={confirmationIsLoading}
               className="vz-am__confirmation-button"
-            onClick={() => confirmTimeSlot()}>
+              onClick={() => confirmTimeSlot()}>
               {_vz('confirm')}
             </button>
           </div>

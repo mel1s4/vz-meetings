@@ -4,19 +4,19 @@
 add_action('rest_api_init', 'vz_am_register_rest_routes');
 function vz_am_register_rest_routes() { 
   register_rest_route('vz-am/v1', '/availability', array(
-    'methods' => 'GET',
+    'methods' => 'POST',
     'callback' => 'vz_am_month_availability',
   ));
   register_rest_route('vz-am/v1', '/timeslots', array(
-    'methods' => 'GET',
+    'methods' => 'POST',
     'callback' => 'vz_am_timeslots',
   ));
-  register_rest_route('vz-am/v1', '/confirm_meeting', array(
+  register_rest_route('vz-am/v1', '/confirm', array(
     'methods' => 'POST',
     'callback' => 'vz_am_confirm_meeting',
   ));
-  register_rest_route('vz-am/v1', '/create_invite', array(
-    'methods' => 'GET',
+  register_rest_route('vz-am/v1', '/invite_link', array(
+    'methods' => 'POST',
     'callback' => 'vz_am_create_calendar_invite',
   ));
 }
@@ -41,7 +41,14 @@ function vz_am_confirm_meeting($request) {
   $calendar_id = $request->get_param('calendar_id');
   $selected_time_slot = $request->get_param('date_time');
   $duration = get_post_meta($calendar_id, 'vz_am_duration', true);
- 
+  $invite = $request->get_param('invite');
+
+  if (!vz_check_invite($calendar_id, $invite)) {
+    return rest_ensure_response( [
+      'error' => 'Invalid invite',
+    ]);
+  }
+
   $new_meeting = [
     'date_time' => $selected_time_slot,
     'duration' => $duration,
@@ -59,6 +66,13 @@ function vz_am_confirm_meeting($request) {
   foreach ($new_meeting as $key => $value) {
     update_post_meta($new_meeting_id, $key, $value);
   }
+  // destroy invitation
+  $found = get_page_by_path($invite, OBJECT, 'vz-am-invite');
+  $invitation_used = json_encode($found);
+  if ($found) {
+    wp_delete_post($found->ID, true);
+  }
+  update_post_meta($new_meeting_id, 'invitation_used', $invitation_used);
   return rest_ensure_response( [
     'meeting' => $new_meeting_id,
   ]);
@@ -89,10 +103,29 @@ function vz_am_get_days_of_month($month, $year) {
   return $days;
 }
 
+function vz_check_invite($calendar_id, $invite) {
+  if (!get_post_meta($calendar_id, 'vz_am_requires_invite', true)) return true;
+  $found = get_page_by_path($invite, OBJECT, 'vz-am-invite');
+  if (!$found) return false;
+  if (is_wp_error($found)) return false;
+  $invite_calendar = get_post_meta($found->ID, 'calendar_id', true);
+  if (!$invite_calendar) return false;
+  if ($invite_calendar != $calendar_id) return false;
+  return true;
+}
+
 function vz_am_month_availability($request) {
+  $calendar_id = $request->get_param('calendar_id');
+  $invite = $request->get_param('invite');
+    
+  if (!vz_check_invite($calendar_id, $invite)) {
+    return rest_ensure_response( [
+      'error' => 'Invalid invite',
+    ]);
+  }
+
   $month = $request->get_param('month');
   $year = $request->get_param('year');
-  $calendar_id = $request->get_param('calendar_id');
   // return vz_am_get_month_availability($calendar_id, $year, $month);
   return rest_ensure_response( [
     'available_days' => vz_am_get_month_availability($calendar_id, $year, $month),
@@ -103,6 +136,19 @@ function vz_am_month_availability($request) {
 function vz_am_get_month_availability($calendar_id, $year, $month) { 
   $calendar = get_post($calendar_id);
   $availability_rules = JSON_decode(get_post_meta($calendar_id, 'vz_availability_rules', true));
+  $max_days_in_advance = get_post_meta($calendar_id, 'vz_am_maximum_days_in_advance', true);
+  $max_days_in_advance = $max_days_in_advance ? $max_days_in_advance : 60;
+  $today = new DateTime();
+
+  if ($today->format('Y-m') > "$year-$month" || "$year-$month" > $today->add(new DateInterval('P' . $max_days_in_advance . 'D'))->format('Y-m')) {
+    return;
+  }
+
+  // // if month is more than 60 days in the future, return empty array
+  // if ($today->add(new DateInterval('P' . $max_days_in_advance . 'D'))->format('Y-m') < "$year-$month") {
+  //   return [];
+  // }
+
   // sort the rules by id
   usort($availability_rules, function($a, $b) {
     return $a->id - $b->id;
@@ -142,7 +188,7 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
       $start_date = $rule_start_date > $month_start_date ? $rule_start_date : $month_start_date;
       $end_date = $rule_end_date < $month_end_date ? $rule_end_date : $month_end_date;
       $interval = new DateInterval('P1D');
-      $period = new DatePeriod($start_date, $interval, $end_date);
+      $period = new DatePeriod($start_date, $interval, $end_date, DatePeriod::INCLUDE_END_DATE);
       foreach ($period as $day) {
         if ($rule->showWeekdays) {
           $week_day = $day->format('N');
@@ -154,9 +200,6 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
         }
       }
     }
-    
-
-
     if ($rule->type === 'weekday') {
       $weekdays = $rule->weekdays;
       $start_date = new DateTime("$year-$month-01");
@@ -170,9 +213,22 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
           $available_days[$day->format('d')] = $available;
         }
       }
-
     }
   }
+
+  // remove days that are beyond the 60 days mark
+  $limit_date = $today->setTime(0, 0);
+  $limit_date->add(new DateInterval('P' . $max_days_in_advance . 'D'));
+  foreach ($available_days as $day => $available) {
+    $date = new DateTime("$year-$month-$day");
+    if ($date > $limit_date || !$available) {
+      unset($available_days[$day]);
+    }
+  }
+  $available_days['today'] = $today->format('Y-m-d');
+  $available_days['limit_date'] = $limit_date->format('Y-m-d');
+  $available_days['max_days_in_advance'] = $max_days_in_advance;
+
   ksort($available_days);
   return $available_days;
 }
@@ -194,10 +250,16 @@ function vzFormatFrame($available, $start = false, $end = false) {
 }
 
 function vz_am_timeslots($request) {
+  $calendar_id = $request->get_param('calendar_id');
+  $invite = $request->get_param('invite');
+  if (!vz_check_invite($calendar_id, $invite)) {
+    return rest_ensure_response( [
+      'error' => 'Invalid invite',
+    ]);
+  }
   $month = $request->get_param('month');
   $year = $request->get_param('year');
   $day = $request->get_param('day');
-  $calendar_id = $request->get_param('calendar_id');
   // return vz_am_get_timeslots($calendar_id, $year, $month, $day);
   return rest_ensure_response( [
     'timeslots' => vz_am_get_timeslots($calendar_id, $year, $month, $day),
@@ -350,33 +412,31 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
   return $timeslots;
 }
 
-function vz_am_create_calendar_invite($calendar_id) {
-  return rest_ensure_response( [
-    'invite' => 'created',
-  ]);
+function vz_am_make_invite_link($calendar_id, $random_id) {
+  $calendar_slug = get_post_field('post_name', $calendar_id);
+  return home_url("/calendar/$calendar_slug?invite=$random_id");
+}
 
+function vz_am_create_calendar_invite($request) {
   $params = $request->get_params();
-  // $nonce = $request->get_header('X-WP-Nonce'); // Get the nonce from the request header
-  // if (!wp_verify_nonce($nonce, 'wp_rest')) {
-  //   return new WP_Error('invalid_nonce', 'Invalid nonce', ['status' => 403]);
-  // }
-  // if (!current_user_can('edit_posts')) {
-  //   return new WP_Error('unauthorized', 'Unauthorized', ['status' => 403]);
-  // }
   $calendar_id = $request->get_param('calendar_id');
-  // add the invite as metadata to the calendar
-  // the uppercase php function is uppercase(
-  $random_id = strtoupper(wp_generate_password(5, false));
+  $random_id = strtoupper(wp_generate_password(6, false));
   $invite_details = [
     'calendar_id' => $calendar_id,
     'random_id' => $random_id,
+    'invite_link' => vz_am_make_invite_link($calendar_id, $random_id),
   ];  
   
   $invite_id = wp_insert_post([
     'post_type' => 'vz-am-invite',
-    'post_title' => 'Invite ' . $invite_details['random_id'],
-    'post_status' => 'publish',
+    'post_title' => 'Invite | ' . $invite_details['random_id'],
+    'post_name' => $invite_details['random_id'],
   ]);
+
+  if (is_wp_error($invite_id)) {
+    return new WP_Error('error', 'Error creating invite', ['status' => 500]);
+  }
+  update_post_meta($invite_id, 'calendar_id', $calendar_id);
 
   return rest_ensure_response( [
     'invite' => $invite_details,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import TotalTimeInput from './totalTimeInput';
 import './calendarOptions.scss';
-import axios from 'axios';
+import api from './api';
 
 function CalendarOptions ({
   maxDaysInAdvance,
@@ -14,30 +14,19 @@ function CalendarOptions ({
   setCalendarEnabled,
   requiresInvite,
   setRequiresInvite,
-  restUrl,
-  setRestUrl,
-  restNonce,
   calendarId,
 }) {
-  const [copyLinkIsLoading, setCopyLinkIsLoading] = useState(false);
+  const [CopyWasTriggered, setCopyWasTriggered] = useState(false);
   async function copyInviteLink(e) {
     e.preventDefault();
-    // add to clipboard
-    const link = "example";
     try {
-      setCopyLinkIsLoading(true);
-      const data = {
+      const params = {
         calendar_id: calendarId
       };
-      const response = await axios.get( restUrl + 'vz-am/v1/confirm_meeting', data, {
-        // headers: {
-        //   'X-WP-Nonce': restNonce
-        // }
-      });
-      console.log(response);
-
-      // await navigator.clipboard.writeText(link);
-      // console.log('Page URL copied to clipboard');
+      const response = await api.post('invite_link', params);
+      const link = response.data.invite.invite_link;
+      await navigator.clipboard.writeText(link);
+      setCopyWasTriggered(true);
     } catch(e) {
       console.log('Failed to copy page URL to clipboard');
     }
@@ -57,9 +46,9 @@ function CalendarOptions ({
           <label className="vz-toggle-switch">
             <input type="checkbox"
                   onClick={e => setCalendarEnabled(e.target.checked)}
-                  checked={calendarEnabled}
+                  { ...(calendarEnabled == 'on' ? {defaultChecked: true} : {}) }
                   name="vz_am_enabled" />
-              <span>
+               <span className={requiresInvite ? '--active' : ''}>
                 Enable Calendar
               </span>
           </label>
@@ -101,16 +90,21 @@ function CalendarOptions ({
             <label className="vz-toggle-switch">
               <input type="checkbox"
                     onClick={e => setRequiresInvite(e.target.checked)}
-                    checked={requiresInvite}
+                    { ...(requiresInvite === 'on' ? {defaultChecked: true} : {}) }                    
                     name="vz_am_requires_invite" />
-                <span>
+                <span className={requiresInvite ? '--active' : ''}>
                   Requires Invite 
                 </span>
             </label>
             { requiresInvite && 
               <button className="vz-am__copy-invite-link"
+                      disabled={CopyWasTriggered}
                       onClick={e => copyInviteLink(e)}>
-                Copy Link
+                {
+                  CopyWasTriggered
+                    ? 'Copied!'
+                    : 'Copy Invite Link'
+                }
               </button>
             }
           </div>

@@ -11,6 +11,10 @@ if (class_exists('WooCommerce')) {
   add_action('admin_notices', 'vz_am_woocommerce_not_active');
 }
 
+if (!wp_next_scheduled('vz_am_remove_old_invites')) {
+  wp_schedule_event(time(), 'hourly', 'vz_am_remove_old_invites');
+}
+
 $calendar_slug = get_option('vz_am_calendar_slug', 'calendar');
 register_post_type('vz-calendar', array(
   'labels' => array(
