@@ -90,5 +90,13 @@
   "minutes": {
     "en": "minutes",
     "es": "minutos"
+  },
+  "Ok": {
+    "en": "Accept",
+    "es": "Aceptar"
+  },
+  "requires-invite": {
+    "en": "Requires Invite Code",
+    "es": "Requiere de un Código de Invitación"
   }
 }

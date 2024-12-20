@@ -30,6 +30,10 @@ function CalendarOptions ({
     } catch(e) {
       console.log('Failed to copy page URL to clipboard');
     }
+
+    setTimeout(() => {
+      setCopyWasTriggered(false);
+    }, 3000);
   }
 
   return (
@@ -48,7 +52,7 @@ function CalendarOptions ({
                   onClick={e => setCalendarEnabled(e.target.checked)}
                   { ...(calendarEnabled == 'on' ? {defaultChecked: true} : {}) }
                   name="vz_am_enabled" />
-               <span className={requiresInvite ? '--active' : ''}>
+               <span className={calendarEnabled ? '--active' : ''}>
                 Enable Calendar
               </span>
           </label>

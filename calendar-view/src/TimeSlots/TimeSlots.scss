@@ -37,7 +37,6 @@
 }
 
 .vz-am__loading-timeslots {
-  
   li:before {
     display: block;
     content: "00:00";
@@ -46,7 +45,7 @@
     font-size: 1em;
     padding: 0.5em 1em;
     border-radius: 1.5em;
-    background-color: #EAEAEA;
+    background-color: #dadada;
     animation: blink 1s infinite;
   }
   li:nth-child(even):before {

@@ -130,10 +130,9 @@ function vz_am_enqueue_calendar_scripts() {
       'rest_url' => get_rest_url(),
       'slot_size' => get_post_meta($id, 'vz_am_duration', true),
       'availability' => [],
-      'invite' => false,
       'language' => get_locale(),
       'meetings' => $meetings,
-      'invitation_code' => $_GET['invite'],
+      'invite' => isset($_GET['invite']) ? $_GET['invite'] : '',
       'requires_invite' => get_post_meta($id, 'vz_am_requires_invite', true),
     ];
 

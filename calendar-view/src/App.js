@@ -24,9 +24,8 @@ function App({ preview = false }) {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [monthIsLoading, setMonthIsLoading] = useState({});
   const [timeSlotsAreLoading, setTimeSlotsAreLoading] = useState({});
-  const [invitationCode, setInvitationCode] = useState(null);
+  const [inviteCode, setinviteCode] = useState(null);
   const [requiresInvite, setRequiresInvite] = useState(false);
-
   const [popup, setPopup] = useState({
     open: false,
     message: '',
@@ -34,7 +33,8 @@ function App({ preview = false }) {
   });
   const [confirmationIsLoading, setConfirmationIsLoading] = useState(false);
   const [highlightedDatetime, setHighlightedDatetimeVariable] = useState(null);
-  
+  const [errorFetching, setErrorFetching] = useState(null);
+  const [meetingWasConfirmed, setMeetingWasConfirmed] = useState(false);
   function setHighlightedDateTime(date) {
     if (date) {
       setHighlightedDatetimeVariable(date);
@@ -45,11 +45,11 @@ function App({ preview = false }) {
 
   useEffect(() => {
     const today = new Date();
-    // setCalendarId(window?.calendar_params?.calendar_id);
     setCalendarId(6);
     setSelectedDay(today.getDate());
     setSelectedMonth(today.getMonth());
     setSelectedYear(today.getFullYear());
+
     const exampleTimeSlot = {
       '11:00': true,
       '11:48': true,
@@ -93,7 +93,7 @@ function App({ preview = false }) {
         language,
         rest_nonce,
         meetings,
-        invitation_code,
+        invite,
         requires_invite,
        } = window.vz_calendar_view_params;
         setCalendarId(calendar_id);
@@ -107,16 +107,12 @@ function App({ preview = false }) {
         setMonthAvailability(nmA);
         setTimeSlots(availability?.timeslots);
         setUserMeetings(meetings);
-        setInvitationCode(invitation_code);
+        setinviteCode(invite);
         setRequiresInvite(requires_invite);
     }
   }, []);
   
-  useEffect(() => {
-    if (selectedMonth >= 0 && selectedYear > 2000 && restUrl ) {
-      getMonthAvailability(selectedMonth + 1, selectedYear);
-    }
-  }, [selectedMonth, selectedYear, restUrl]);
+  
 
   useEffect(() => {
     if (selectedDay && calendarId) {
@@ -126,7 +122,7 @@ function App({ preview = false }) {
   , [selectedDay, selectedMonth, selectedYear, calendarId]);
 
   async function getTimeSlots() {
-    if (previewMode) return;
+    if ((requiresInvite && !inviteCode) || previewMode) return;
     if (timeSlots && timeSlots[selectedYear] && timeSlots[selectedYear][selectedMonth + 1] && timeSlots[selectedYear][selectedMonth + 1][selectedDay]) {
       return;
     }
@@ -141,7 +137,7 @@ function App({ preview = false }) {
         year: selectedYear,
         day: selectedDay,
         calendar_id: calendarId,
-        invite: invitationCode,
+        invite: inviteCode,
       };
       const response = await api('timeslots', getParams);
       const newTimeSlots = {
@@ -163,9 +159,11 @@ function App({ preview = false }) {
 
 
     } catch (error) {
+      setErrorFetching('timeslots');
       const pLoading2 = { ...timeSlotsAreLoading };
       pLoading2[selectedYear + '-' + (selectedMonth + 1) + '-' + selectedDay] = false;
       setTimeSlotsAreLoading(pLoading2);
+      console.log('error', error);
       setPopup({
         open: true,
         message: 'There was an error fetching the time slots. Please try again later.',
@@ -175,7 +173,20 @@ function App({ preview = false }) {
     }
   }
 
+  useEffect(() => {
+    // if selected month is not current month
+    const today = new Date();
+    const cMonth = today.getMonth();
+    if (selectedMonth === cMonth) {
+      return;
+    }
+    if (selectedMonth >= 0 && selectedYear > 2000 && restUrl ) {
+      getMonthAvailability(selectedMonth + 1, selectedYear);
+    }
+  }, [selectedMonth, selectedYear, restUrl]);
+
   async function getMonthAvailability() {
+    if (requiresInvite && !inviteCode) return;
     if (monthAvailability[selectedYear + '-' + (selectedMonth + 1)]) {
       return;
     }
@@ -187,7 +198,7 @@ function App({ preview = false }) {
         year: selectedYear,
         month: selectedMonth + 1,
         calendar_id: calendarId,
-        invite: invitationCode,
+        invite: inviteCode,
       };
       const response = await api('availability', params);
       const newMonthAvailability = { ...monthAvailability };
@@ -202,16 +213,21 @@ function App({ preview = false }) {
       const pLoadingMonths2 = { ...monthIsLoading };
       pLoadingMonths2[selectedYear + '-' + (selectedMonth + 1)] = false;
       setMonthIsLoading(pLoadingMonths2);
-      setPopup({
-        open: true,
-        message: 'There was an error fetching the availability. Please try again later.',
-        type: 'error'
-      });
+      const rInvite = error.response.data.code == "invalid_invite";
+      if (rInvite){ 
+        if (!requiresInvite) setRequiresInvite(true);
+        setErrorFetching('invite_code');
+        // ignore if invite is required
+      } else {
+        setPopup({
+          open: true,
+          message: _vz('error-fetching-month'),
+          type: 'error'
+        });
+      }
 
     }
   }
-
-  
 
   function getDateTimeInLocale(date, separated = false) {
     const year = date.toLocaleString('default', { year: 'numeric' });
@@ -237,22 +253,29 @@ function App({ preview = false }) {
       }
     });
   }
-  
 
+  function lockedTimeSlots() {
+    if (meetingWasConfirmed) return true;
+    if (requiresInvite && !inviteCode) return true;
+    if (inviteCode && errorFetching === 'invite_code') return true;
+    console.log('lockedTimeSlots', requiresInvite, inviteCode, errorFetching);
+    return false;
+  }
+  
   async function confirmTimeSlot() {
     if (previewMode) return;
     const data = {
       calendar_id: calendarId,
       date_time: selectedTimeSlot,
       nonce: restNonce,
-      invite: invitationCode,
+      invite: inviteCode,
     };
     try {
       setConfirmationIsLoading(true);
       const response = await api('confirm', data);
       setPopup({
         open: true,
-        message: 'Your meeting has been confirmed.',
+        message: _vz('meeting-confirmed'),
         type: 'success'
       });
       setUserMeetings([...userMeetings, {
@@ -262,11 +285,9 @@ function App({ preview = false }) {
       }]);
       setSelectedTimeSlot(null);
       // remove slot from timeslots
-      const newTimeSlots = { ...timeSlots };
-      delete newTimeSlots[selectedYear][selectedMonth + 1][selectedDay][selectedTimeSlot.toLocaleTimeString('default', { hour: '2-digit', minute: '2-digit' })];
-      setTimeSlots(newTimeSlots);
-
+      setTimeSlots(null);
       setConfirmationIsLoading(false);
+      setMeetingWasConfirmed(true);
     } catch (error) {
       console.error(error);
       setConfirmationIsLoading(false);
@@ -278,11 +299,6 @@ function App({ preview = false }) {
     }
   }
 
-  
-
-
-  
-
   return (
     <section className={`vz-time-slot-selection ${preview ? '--vz-is-preview' : ''}`}>
 
@@ -293,7 +309,32 @@ function App({ preview = false }) {
                       getDayOfWeek={getDayOfWeek}
         />
       )}
-      
+
+      {(requiresInvite && !inviteCode) && (
+        <div className="vz-am__requires-invite">
+          <h3 className="vz-am__title"> 
+            {_vz('requires-invite')}
+          </h3>
+        </div>
+      )}
+
+      {(errorFetching === 'invite_code' && inviteCode && !meetingWasConfirmed) && (
+        <div className="vz-am__requires-invite">
+          <h3 className="vz-am__title"> 
+            {_vz('invalid-invite')}
+          </h3>
+        </div>
+      )}
+
+      {(meetingWasConfirmed) && (
+        <div className="vz-am__requires-invite">
+          <h3 className="vz-am__title"> 
+            {_vz('used-invite')}
+          </h3>
+        </div>
+      )}
+
+
       <Calendar 
         selectedMonth={selectedMonth}
         selectedYear={selectedYear}
@@ -318,6 +359,7 @@ function App({ preview = false }) {
         timeSlotSize={timeSlotSize}
         timeSlotsAreLoading={timeSlotsAreLoading}
         timeZone={timeZone}
+        lockedTimeSlots={lockedTimeSlots}
       />
 
       {( (selectedTimeSlot || previewMode) &&

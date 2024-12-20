@@ -44,9 +44,7 @@ function vz_am_confirm_meeting($request) {
   $invite = $request->get_param('invite');
 
   if (!vz_check_invite($calendar_id, $invite)) {
-    return rest_ensure_response( [
-      'error' => 'Invalid invite',
-    ]);
+    return new WP_Error('invalid_invite', 'Invalid invite', ['status' => 403]);
   }
 
   $new_meeting = [
@@ -119,9 +117,10 @@ function vz_am_month_availability($request) {
   $invite = $request->get_param('invite');
     
   if (!vz_check_invite($calendar_id, $invite)) {
-    return rest_ensure_response( [
-      'error' => 'Invalid invite',
-    ]);
+    // return rest_ensure_response( [
+    //   'error' => 'Invalid invite',
+    // ]);
+    return new WP_Error('invalid_invite', 'Invalid invite', ['status' => 403]);
   }
 
   $month = $request->get_param('month');

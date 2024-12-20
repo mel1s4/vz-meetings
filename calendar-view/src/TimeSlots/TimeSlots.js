@@ -11,7 +11,8 @@ export default function TimeSlots({
   selectedTimeSlot,
   timeSlotsAreLoading,
   setSelectedTimeSlot,
-  timeZone
+  timeZone,
+  lockedTimeSlots,
 }) {
 
   const [visitorTimeZone, setVisitorTimeZone] = useState(
@@ -59,6 +60,14 @@ export default function TimeSlots({
     return false;
   }
 
+  function noTimeSlots() {
+    if (lockedTimeSlots) return true;
+    if (timeslotsAreReady()) {
+      return Object.keys(timeSlots[selectedYear][selectedMonth + 1][selectedDay]).length === 0;
+    }
+  }
+
+  
 
   return (
     <div className="vz-time-slots">
@@ -66,8 +75,7 @@ export default function TimeSlots({
     <p>
       {timeSlotSize} {_vz('minutes-per-slot')}
     </p>
-    {
-      timeSlotsAreLoading[selectedYear + '-' + (selectedMonth + 1) + '-' + selectedDay] && (
+    { timeSlotsAreLoading[selectedYear + '-' + (selectedMonth + 1) + '-' + selectedDay] && (
         <ul className="vz-am__loading-timeslots">
           <li></li>
           <li></li>
@@ -77,8 +85,7 @@ export default function TimeSlots({
       )
     }
     <ul className="vz-am__time-slots__list">
-      {
-      timeslotsAreReady() && Object.keys(timeSlots[selectedYear][selectedMonth + 1][selectedDay]).map((time, index) => (
+      { timeslotsAreReady() && Object.keys(timeSlots[selectedYear][selectedMonth + 1][selectedDay]).map((time, index) => (
         <li className="vz-am__time-slots__item" key={index}>
           <button
             onClick={(e) => selectTimeSlot(e, time)}
@@ -90,11 +97,10 @@ export default function TimeSlots({
       ))
       }
     </ul>
-    { timeslotsAreReady() && 
-      !Object.keys(timeSlots[selectedYear][selectedMonth + 1][selectedDay]).length && (
-          <p>
-            {_vz('no-meetings')}
-          </p>
+    { noTimeSlots() && (
+        <p>
+          {_vz('no-meetings')}
+        </p>
     )}
 
     <p className="vz-am__visitor-timezone">
