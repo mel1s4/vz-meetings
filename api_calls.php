@@ -419,6 +419,18 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
       }
     }
 
+    foreach ($meetings as $meeting) {
+      $meeting_start = new DateTime($meeting['date_time']);
+      $meeting_end = clone $meeting_start;
+      $meeting_end->add(new DateInterval('PT' . $meeting['duration'] . 'M'));
+      if ($slot >= $meeting_start && $slot < $meeting_end) {
+        $is_available = false;
+      }
+      if ($slot_end_time > $meeting_start && $slot_end_time <= $meeting_end) {
+        $is_available = false;
+      }
+    }
+
     if ($is_available) {
       $timeslots[] = clone $slot;
     }

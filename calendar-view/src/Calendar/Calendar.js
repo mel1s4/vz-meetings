@@ -27,7 +27,6 @@ export default function Calendar({
     const today = new Date();
     const [year, month, date] = formatDate(today).split('-');
     return parseInt(date) === day && parseInt(month) === selectedMonth + 1 && parseInt(year) === selectedYear;
-    return false;
   }
 
   function isAvailable(day) {

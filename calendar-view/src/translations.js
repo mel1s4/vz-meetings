@@ -29,11 +29,27 @@ export const formatDate = (date = new Date()) => {
   return [year, month, day].join('-');
 }
 
+export const formatDateReadable = (date = new Date()) => {
+  let lang = 'es';
+  if (window && window.vz_calendar_view_params && window.vz_calendar_view_params.lang) {
+    lang = window.vz_calendar_view_params.lang.substring(0, 2);
+  }
+  
+  // domingo 14 de septiembre de 2021
+  // Sunday, September 14, 2021
+  const day = date.toLocaleString(lang, { weekday: 'long' });
+  const month = date.toLocaleString(lang, { month: 'long' });
+  const year = date.toLocaleString(lang, { year: 'numeric' });
+
+  return "el " + day + " " + date.getDate() + " de " + month + " de " + year;
+};
+
 const translations = {
   _vz,
   Month,
   WeekDays,
   formatDate,
+  formatDateReadable,
 };
 
 

@@ -4,7 +4,7 @@ import axios from 'axios';
 import './App.scss';
 import UserMeetings from './UserMeetings/UserMeetings';
 import Calendar from './Calendar/Calendar';
-import {_vz, formatDate } from './translations';
+import {_vz, formatDate, formatDateReadable } from './translations';
 import TimeSlots from './TimeSlots/TimeSlots';
 
 function App({ preview = false }) {
@@ -270,6 +270,11 @@ function App({ preview = false }) {
     }
   }
 
+  function formatSelectedTimeSlot() {
+    console.log('formatSelectedTimeSlot', selectedTimeSlot);
+    return "helo";
+  }
+
   return (
     <section className={`vz-time-slot-selection ${preview ? '--vz-is-preview' : ''}`}>
 
@@ -341,7 +346,7 @@ function App({ preview = false }) {
               {_vz('meeting-confirmation')}
             </h2>
             <p>
-              {selectedTimeSlot ? `${_vz('you-selected')} ${getDateTimeInLocale(selectedTimeSlot)} ${_vz('for-meeting')}` : _vz('please-select-time-slot')}
+              {selectedTimeSlot ? `${_vz('you-selected')} ${formatDateReadable(selectedTimeSlot)} ${_vz('for-meeting')}` : _vz('please-select-time-slot')}
             </p>
             <button 
               disabled={confirmationIsLoading}

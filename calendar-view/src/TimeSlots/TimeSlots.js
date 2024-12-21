@@ -30,16 +30,7 @@ export default function TimeSlots({
 
   function selectTimeSlot(e, timeObject) {
     e.preventDefault();
-    /* 
-      {
-        date: "2024-12-28 02:30:00.000000"
-        timezone: "America/Mexico_City"
-        timezone_type: 3 
-      }
-    */
-    const timeDate = timeObject.date.replace(" ", "T");
-    const date = DateTime.fromISO(timeDate, { zone: timeObject.timezone });
-    
+    const date = DateTime.fromISO(timeObject.date.replace(" ", "T"), { zone: timeObject.timezone });
     setSelectedTimeSlot(date.toJSDate());
   }
 
@@ -48,11 +39,10 @@ export default function TimeSlots({
     return timeSlots && timeSlots[selectedYear] && timeSlots[selectedYear][selectedMonth + 1] && timeSlots[selectedYear][selectedMonth + 1][selectedDay];
   }
 
-  function isSelectedTimeSlot(time) {
+  function isSelectedTimeSlot(currentTimeSlot) {
     if (selectedTimeSlot) {
-      const [year, month, day] = formatDate(selectedTimeSlot).split('-');
-      const [hours, minutes] = time.split(':');
-      return parseInt(day) === selectedDay && parseInt(month) === selectedMonth + 1 && parseInt(year) === selectedYear && selectedTimeSlot.getHours() === parseInt(hours) && selectedTimeSlot.getMinutes() === parseInt(minutes);
+      const date = DateTime.fromISO(currentTimeSlot.date.replace(" ", "T"), { zone: currentTimeSlot.timezone });
+      return date.toJSDate().getTime() === selectedTimeSlot.getTime();
     }
     return false;
   }
