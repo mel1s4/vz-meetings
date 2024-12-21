@@ -223,10 +223,10 @@ function vzFormatFrame($available, $start = false, $end = false) {
   // formatted to the website timezone, as the rules where made there
   $website_timezone = new DateTimeZone(get_option('timezone_string'));
   if (!$start) {
-    $start = '00:00';
+    return;
   }
   if (!$end) {
-    $end = '23:59';
+    return;
   }
   return [
     'available' => $available,
@@ -277,122 +277,83 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
   // this will create "availability frames" that will be used to determine the available frames, used to create the timeslots
   foreach ($availability_rules as $index => $rule) {
     $available = $rule->action === 'available';
-    if ($rule->type === 'specific-date' && $rule->specificDate !== "$year-$month-$day") {
-      continue;
-    } 
-    if (!$rule->includeTime) {
-      // specific-date
-      if ($rule->type === 'specific-date') {
-        $availability_frames[] = vzFormatFrame($available);
-        continue;
-      }
-      // between-dates
-      if ($rule->type === 'between-dates') {
+    if ($rule->type == 'weekday') {
+      $weekdays = $rule->weekdays;
+      $day_date_weekday = $day_date->format('N');
+      if (in_array($day_date_weekday, $weekdays)) {
+        // start of request is in a week day
+        // availability by default would be the start of request until the end of that day
+        // but if the rule has start time and end time
+        // then the frame start will be the bigger number between the rule start time and the request start time
+        // and the frame end will be the smaller number between the rule end time and the request end time
         
-        $rule_start_date = new DateTime($rule->startDate, $website_timezone);
-        $rule_end_date = new DateTime($rule->endDate, $website_timezone);
-        if ($day_date >= $rule_start_date && $day_date <= $rule_end_date) {
-          if (!$rule->showWeekdays || in_array($day_of_week, $rule->weekdays)) 
-            $availability_frames[] = vzFormatFrame($available);
-        }
-      }
-
-      // weekdays
-      if ($rule->type === 'weekday' && in_array($day_of_week, $rule->weekdays)) {
-        $availability_frames[] = vzFormatFrame($available);
-      }
-    } else {
-      $start_time = $rule->startTime;
-      $end_time = $rule->endTime;
-      if ($rule->type === 'weekday' && in_array($day_of_week, $rule->weekdays)) {
-        $availability_frames[] = vzFormatFrame($available, $start_time, $end_time);
-      }
-  
-      if ($rule->type === 'specific-date' && $rule->specificDate == "$year-$month-$day") {
-        $availability_frames[] = vzFormatFrame($available, $start_time, $end_time);
-      }
-
-      if ($rule->type === 'between-dates') {
-        $start_date = new DateTime($rule->startDate, $website_timezone);
-        $end_date = new DateTime($rule->endDate, $website_timezone);
-        if ($day_date < $start_date || $day_date > $end_date){
-          // if its out of range
-           continue;
-        } else if ($rule->showWeekdays && in_array($day_of_week, $rule->weekdays)) {
-          // in range - selected weekdays
-          $availability_frames[] = vzFormatFrame($available, $start_time, $end_time);
-        } else if ($day_date >= $start_date && $day_date <= $end_date) {
-          // in range - all days
-          $availability_frames[] = vzFormatFrame($available, $start_time, $end_time);
-        }
-      }
-    }
-  }
-
-  // availability frames are added and subtracted until the available frames are rendered
-  // the available frames are used to create the timeslots
-  $available_frames = [];
-  $availability_frames = array_reverse($availability_frames); // inverse the availability frames - obey rule hierachy
-  foreach ($availability_frames as $frame) {
-    $available = $frame['available'];
-    $start = new DateTime($frame['start'], $website_timezone); // its only time
-    $end = new DateTime($frame['end'], $website_timezone); // its only time
-    
-    if (sizeof($available_frames) > 0) {
-      foreach ($available_frames as $id => $aframe) {
-        $frame_start = new DateTime($frame['start'], $website_timezone); // its only time
-        $frame_end = new DateTime($frame['end'], $website_timezone); // its only time
-
-
-        // availability frame covers the available frame
-        if ($start <= $frame_start && $end >= $frame_end) {
-          if ($available) {
-            $available_frames[$id]['start'] = $start;
-            $available_frames[$id]['end'] = $end;
-          } else {
-            unset($available_frames[$id]);
-          }
-        } else if ($start <= $frame_start && $end < $frame_end) {
-          // start cut and addition
-          if ($available) {
-            // extend frame
-            $available_frames[$id]['start'] = $start;
-          } else {
-            // shorten frame
-            $available_frames[$id]['start'] = $end;
-          }
-        } else if ($start > $frame_start && $end >= $frame_end) {
-          // end cut and addition
-          if ($available) {
-            // extend frame
-            $available_frames[$id]['end'] = $end;
-          } else {
-            // shorten frame
-            $available_frames[$id]['end'] = $start;
-          }
-        } else if ($start > $frame_start && $fend < $frame_end) {
-          // middle cut or ignore
-          if ($available) {
-            // ignore
-          } else {
-            // split frame
-            $available_frames[$id]['end'] = $start;
-            $available_frames[] = [
-              "start" => $start,
-              "end" => $end,
-              "available" => false,
-            ];
-          }
-        }
+        $rst = $rule->startTime;
+        $rst = explode(':', $rst);
+        $rule_start_time = clone $day_date;
+        $rule_start_time = $rule_start_time->setTime($rst[0], $rst[1]);
+        $ret = $rule->endTime;
+        $ret = explode(':', $ret);
+        $rule_end_time = clone $day_date;
+        $rule_end_time = $rule_end_time->setTime($ret[0], $ret[1]);
+        $frame_start = $rule_start_time > $day_date ? $rule_start_time : $day_date;
+        $frame_end = $rule_end_time < $day_date_end ? $rule_end_time : $day_date_end;
+        
+        $availability_frames[] = vzFormatFrame($available, $frame_start, $frame_end);
       } 
-    }  else if ($available) {
-      $available_frames[] = [
-        "start" => $start, // H:i
-        "end" => $end,
-      ];
+      if (in_array($day_date_end->format('N'), $weekdays)) {
+        // end of request is in a week day
+        // availability by default would be the start of day until the end of request
+        // but if the rule has start time and end time
+        // then the frame end will be the smaller number between the rule end time and the request end time
+        // and the frame start will be the bigger number between 00:00 and the rule start time
+
+        $rst = $rule->startTime;
+        $rst = explode(':', $rst);
+        $rule_start_time = clone $day_date;
+        $rule_start_time = $rule_start_time->setTime($rst[0], $rst[1]);
+        $ret = $rule->endTime;
+        $ret = explode(':', $ret);
+        $rule_end_time = clone $day_date;
+        $rule_end_time = $rule_end_time->setTime($ret[0], $ret[1]);
+        
+        $frame_start = $rule_start_time > $day_date ? $rule_start_time : $day_date;
+        $frame_end = $rule_end_time < $day_date_end ? $rule_end_time : $day_date_end;
+
+        $availability_frames[] = vzFormatFrame($available, $rule_end_datetim, $rule_end_datetim);
+      }
+      continue; // enough login for the timeslot, do no more
+    } else if ($rule->type == 'between-dates') {
+      if ($rule->includeTime) {
+        $rule_start_datetime = new DateTime("$rule->startDate $rule->startTime", $website_timezone);
+        $rule_end_datetime = new DateTime("$rule->endDate $rule->endTime", $website_timezone);
+      } else {
+        $rule_start_datetime = new DateTime("$rule->startDate 00:00", $website_timezone);
+        $rule_end_datetime = new DateTime("$rule->endDate 23:59", $website_timezone);
+      }
+    } else if ($rule->type == 'specific-date') {
+      $rule_start_datetime = new DateTime("$rule->specificDate 00:00", $website_timezone);
+      $rule_end_datetime = new DateTime("$rule->specificDate 23:59", $website_timezone);
+    }
+
+    if ($day_date_end < $rule_start_datetime || $day_date > $rule_end_datetime) {
+      continue; // out of range
+    }
+    $availability_frames[] = vzFormatFrame($available, $rule_start_datetime, $rule_end_datetime);
+  }
+  
+  $slot_lowest_start_time = clone $day_date_end;
+  $slot_highest_end_time = clone $day_date;
+  foreach ($availability_frames as $frame) {
+    if (!$frame['available']) continue; // ignore substractions
+    
+    if ($frame['start'] < $slot_lowest_start_time) {
+      $slot_lowest_start_time = clone $frame['start'];
+    }
+
+    if ($frame['end'] > $slot_highest_end_time) {
+      $slot_highest_end_time = clone $frame['end'];
     }
   }
-
 
   if (!is_numeric($duration)) {
     $duration = 30;
@@ -402,18 +363,14 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
   }
   $slot_total_duration = $duration + $rest;
   $interval = new DateInterval('PT' . $slot_total_duration . 'M');
-  
+
   $timeslots = [];
-  $slot = $day_date;
+  $slot = clone $slot_lowest_start_time;
   $slot_end_time = clone $slot;
   $slot_duration_interval = new DateInterval('PT' . $duration . 'M');
   $slot_end_time = $slot_end_time->add($slot_duration_interval);
 
-  while ($slot < $day_date_end) {
-    $timeslots[] = clone $slot;
-    $slot = $slot->add($interval);
-    // $slot_end_time = $slot->add($slot_duration_interval);
-  }
+  $availability_frames = array_reverse($availability_frames);
 
   // query the database for meetings in the same day and remove the timeslots that are already taken
   $args = [
@@ -441,24 +398,41 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
   ];
 
   $meetings_ids = get_posts($args);
-  if (!empty($meetings_ids)) {
-    foreach ($meetings_ids as $meeting) {
-      $meet_date_time = new DateTime(get_post_meta($meeting->ID, 'date_time', true), $website_timezone);
-      $start = $meet_date_time->format('H:i');
-      $end = $meet_date_time->add(new DateInterval('PT' . $slot_total_duration . 'M'))->format('H:i');
+  $meetings = array_map(function($id) {
+    return [
+      'id' => $id,
+      'date_time' => get_post_meta($id, 'date_time', true),
+      'duration' => get_post_meta($id, 'duration', true),
+    ];
+  }, $meetings_ids);
 
-      foreach ($timeslots as $time => $available) {
-        if ($time >= $start && $time < $end) {
-          unset($timeslots[$time]);
-        }
+  while ($slot < $slot_highest_end_time) {
+    $is_available = true;
+    foreach ($availability_frames as $frame) {
+      if ($frame['available']) continue; // ignore additions
+      // if the slot is inside the frame, dont add it
+      if ($slot >= $frame['start'] && $slot < $frame['end']) {
+        $is_availane = false;
+      }
+      if ($slot_end_time > $frame['start'] && $slot_end_time <= $frame['end']) {
+        $is_available = false;
       }
     }
+
+    if ($is_available) {
+      $timeslots[] = clone $slot;
+    }
+    $slot = $slot->add($interval);
+    // slot end time is updated automatically
   }
+
 
   return [
     'timeslots' => $timeslots,
-    'meeting_ids' => $meetings_ids,
+    'meeting' => $meetings,
     'interval' => $slot_total_duration,
+    'availability_frames' => $availability_frames,
+    'lowest_start_time' => $slot_lowest_start_time,
   ];
 }
 
