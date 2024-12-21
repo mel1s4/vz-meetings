@@ -178,10 +178,11 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
       $rule_end_date = new DateTime($rule->endDate);
       $month_start_date = new DateTime("$year-$month-01");
       $month_end_date = new DateTime("$year-$month-" . $month_start_date->format('t'));
-      $start_date = $rule_start_date > $month_start_date ? $rule_start_date : $month_start_date;
-      $end_date = $rule_end_date < $month_end_date ? $rule_end_date : $month_end_date;
+      $start_date = $rule_start_date > clone $month_start_date ? $rule_start_date : clone $month_start_date;
+      $end_date = $rule_end_date < $month_end_date ? clone $rule_end_date : clone $month_end_date;
       $interval = new DateInterval('P1D');
-      $period = new DatePeriod($start_date, $interval, $end_date, DatePeriod::INCLUDE_END_DATE);
+      $end_date = $end_date->add($interval);
+      $period = new DatePeriod($start_date, $interval, $end_date);
       foreach ($period as $day) {
         if ($rule->showWeekdays) {
           $week_day = $day->format('N');
@@ -198,7 +199,8 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
       $start_date = new DateTime("$year-$month-01");
       $end_date = new DateTime("$year-$month-" . $start_date->format('t'));
       $interval = new DateInterval('P1D');
-      $period = new DatePeriod($start_date, $interval, $end_date, DatePeriod::INCLUDE_END_DATE);
+      $end_date = $end_date->add($interval);
+      $period = new DatePeriod($start_date, $interval, $end_date);
       foreach ($period as $day) {
         $week_day = $day->format('N');
         if (in_array($week_day, $weekdays)) {
@@ -420,13 +422,20 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
     }
 
     foreach ($meetings as $meeting) {
-      $meeting_start = new DateTime($meeting['date_time']);
+      $meeting_timezone = new DateTimeZone('UTC');
+      $meeting_start = new DateTime($meeting['date_time'], $meeting_timezone);
+      $meeting_start->setTimezone($website_timezone);
       $meeting_end = clone $meeting_start;
       $meeting_end->add(new DateInterval('PT' . $meeting['duration'] . 'M'));
+      
       if ($slot >= $meeting_start && $slot < $meeting_end) {
-        $is_available = false;
-      }
-      if ($slot_end_time > $meeting_start && $slot_end_time <= $meeting_end) {
+        $mets[] = [
+          'start' => $meeting_start->format('Y-m-d H:i'),
+          'end' => $meeting_end->format('Y-m-d H:i'),
+          'slot' => $slot,
+          'slot_end' => $slot_end_time,
+          'problem' => 'inside',
+        ];
         $is_available = false;
       }
     }
@@ -441,7 +450,7 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
 
   return [
     'timeslots' => $timeslots,
-    'meeting' => $meetings,
+    'meeting' => $mets,
     'interval' => $slot_total_duration,
     'availability_frames' => $availability_frames,
     'lowest_start_time' => $slot_lowest_start_time,

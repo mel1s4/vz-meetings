@@ -184,27 +184,6 @@ function vz_am_save_calendar_options($post_id) {
   }
 }
 
-// function vz_am_woocommerce_not_active() {
-//   echo '<div class="notice notice-error"><p>' . __vz('WooCommerce is not active. Please activate WooCommerce to use the Meeting Manager plugin.') . '</p></div>';
-// }
-
-// function vz_am_product_options() {
-//   woocommerce_wp_text_input(array(
-//     'id' => 'vz_am_duration',
-//     'label' => __vz('Duration'),
-//     'description' => __vz('Enter the duration of the meeting in minutes.'),
-//   ));
-//   // una opcion para permitirle al administrador decidir si los minutos se pueden agendar de manera separa o unida
-//   woocommerce_wp_checkbox(array(
-//     'id' => 'vz_am_allow_multiple_meetings',
-//     'label' => __vz('Allow multiple meetings'),
-//     'description' => __vz('Check this box to allow customers to create more than one meeting with their available minutes.'),
-//   ));
-//   // a drop down menu to select the calendar from the calendar post type
-//   $selected_calendar = get_post_meta(get_the_ID(), 'vz_am_calendar', true);
-//   vz_product_select_calendar_option($selected_calendar);
-// }
-
 function vz_product_select_calendar_option($selected_calendar) {
   $calendars = get_posts(array(
     'post_type' => 'vz-calendar',

@@ -1,16 +1,4 @@
 <?php
-if ($_SERVER['HTTP_HOST'] == 'localhost') {
-  header("Access-Control-Allow-Origin: *");
-  header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE, PUT");
-  header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization");
-}
-
-// if (class_exists('WooCommerce')) {
-//   add_action('woocommerce_product_options_general_product_data', 'vz_am_product_options');
-//   add_action('woocommerce_process_product_meta', 'vz_am_save_product_options');
-// } else {
-//   add_action('admin_notices', 'vz_am_woocommerce_not_active');
-// }
 
 if (!wp_next_scheduled('vz_am_remove_old_invites')) {
   wp_schedule_event(time(), 'hourly', 'vz_am_remove_old_invites');

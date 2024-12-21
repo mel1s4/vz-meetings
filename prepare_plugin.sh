@@ -1,5 +1,6 @@
 
 rm -rf vz-meetings
+rm vz-meetings.zip
 
 # build and rename
 # cd availability-rules
@@ -16,12 +17,12 @@ mkdir vz-meetings/availability-rules
 cp -r availability-rules/build vz-meetings/availability-rules/build
 
 mkdir vz-meetings/calendar-view
-mkdir vz-meetings/calendar-view/build
+mkdir vz-meetings/calendar-view
 cp -r calendar-view/build vz-meetings/calendar-view/build
 
 mkdir vz-meetings/calendar-block
-mkdir vz-meetings/calendar-block/build
 cp -r calendar-block/build vz-meetings/calendar-block/build
+cp -r calendar-block/src vz-meetings/calendar-block/src
 cp calendar-block/calendar-block.php vz-meetings/calendar-block/calendar-block.php
 
 
