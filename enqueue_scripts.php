@@ -83,6 +83,7 @@ function vz_am_enqueue_calendar_scripts() {
       'meetings' => $meetings,
       'invite' => isset($_GET['invite']) ? $_GET['invite'] : '',
       'requires_invite' => get_post_meta($id, 'vz_am_requires_invite', true),
+      'is_logged_in' => is_user_logged_in() ? 'true' : 'false',
     ];
     
     if (vz_check_invite($id, $invite)) {

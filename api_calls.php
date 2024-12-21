@@ -32,6 +32,49 @@ function vz_create_meeting_title($meeting) {
   return "$user_name | $date_time_str";
 }
 
+function vz_get_email_template($template_name) {
+  $template = file_get_contents(__DIR__ . "/mail-templates/$template_name.html");
+  return $template;
+}
+
+function vz_send_password_reset_email($user_id) {
+  $user = get_user_by('id', $user_id);
+  $user_login = $user->user_login;
+  $user_email = $user->user_email;
+  $key = get_password_reset_key($user);
+  $reset_link = network_site_url("wp-login.php?action=rp&key=$key&login=" . rawurlencode($user_login), 'login');
+  $template = vz_get_email_template('password_reset');
+  $template = str_replace('{{reset_link}}', $reset_link, $template);
+  $template = str_replace('{{site_url}}', get_site_url(), $template);
+  $template = str_replace('{{site_name}}', get_bloginfo('name'), $template);
+  $template = str_replace('{{user_displayname}}', $user->display_name, $template);
+  wp_mail($user_email, 'Password Reset', $message);
+}
+
+function vz_send_meeting_confirmation_email($meeting_id, $visitor_timezone) {
+  $meeting = get_post($meeting_id);
+  $calendar_id = get_post_meta($meeting_id, 'calendar_id', true);
+  $calendar = get_post($calendar_id);
+  $calendar_title = $calendar->post_title;
+  $date_time = new DateTime(get_post_meta($meeting_id, 'date_time', true));
+  $date_time->setTimezone(new DateTimeZone($visitor_timezone));
+  $date_time_str = $date_time->format('Y-m-d H:i');
+  $duration = get_post_meta($meeting_id, 'duration', true);
+  $user_id = get_post_meta($meeting_id, 'user_id', true);
+  $user = get_user_by('id', $user_id);
+  $user_name = $user->display_name;
+  $user_email = $user->user_email;
+  $template = vz_get_email_template('meeting_confirmation');
+  $template = str_replace('{{site_url}}', get_site_url(), $template);
+  $template = str_replace('{{site_name}}', get_bloginfo('name'), $template);
+  $template = str_replace('{{calendar_title}}', $calendar_title, $template);
+  $template = str_replace('{{date_time}}', $date_time_str, $template);
+  $template = str_replace('{{duration}}', $duration, $template);
+  $template = str_replace('{{user_name}}', $user_name, $template);
+  $template = str_replace('{{user_email}}', $user_email, $template);
+  wp_mail($user_email, 'Meeting Confirmation', $template);
+}
+
 function vz_am_confirm_meeting($request) {
   $params = $request->get_params();
   $nonce = $request->get_header('X-WP-Nonce'); // Get the nonce from the request header
@@ -39,6 +82,7 @@ function vz_am_confirm_meeting($request) {
     return new WP_Error('invalid_nonce', 'Invalid nonce', ['status' => 403]);
   }
   $calendar_id = $request->get_param('calendar_id');
+  $visitor_timezone = $request->get_param('visitor_timezone');
   $selected_time_slot = $request->get_param('date_time');
   $duration = get_post_meta($calendar_id, 'vz_am_duration', true);
   $invite = $request->get_param('invite');
@@ -46,11 +90,33 @@ function vz_am_confirm_meeting($request) {
   if (!vz_check_invite($calendar_id, $invite)) {
     return new WP_Error('invalid_invite', 'Invalid invite', ['status' => 403]);
   }
+  
+  $user_id = get_current_user_id();
+  if (!is_user_logged_in()) {
+    $user_email = $request->get_param('user_email');
+    $user_name = $request->get_param('user_name');
+
+    if (!is_email($user_email)) {
+      return new WP_Error('invalid_email', 'Invalid email', ['status' => 400]);
+    }
+
+    $user_id = email_exists($user_email);
+    if ($user_id) {
+      return new WP_Error('email_exists', 'Login to use this email for schedule.', ['status' => 400]);
+    } else {
+      $user_id = wp_create_user($user_email, wp_generate_password(), $user_email);
+      wp_update_user([
+        'ID' => $user_id,
+        'display_name' => $user_name,
+      ]);
+      vz_send_password_reset_email($user_id);
+    }
+  }
 
   $new_meeting = [
     'date_time' => $selected_time_slot,
     'duration' => $duration,
-    'user_id' => get_current_user_id(),
+    'user_id' => $user_id,
     'calendar_id' => $calendar_id, 
   ];
   $new_meeting_id = wp_insert_post([
@@ -64,6 +130,8 @@ function vz_am_confirm_meeting($request) {
   foreach ($new_meeting as $key => $value) {
     update_post_meta($new_meeting_id, $key, $value);
   }
+
+  vz_send_meeting_confirmation_email($new_meeting_id, $visitor_timezone);
   // destroy invitation
   $found = get_page_by_path($invite, OBJECT, 'vz-am-invite');
   $invitation_used = json_encode($found);

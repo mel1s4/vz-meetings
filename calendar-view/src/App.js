@@ -28,6 +28,9 @@ function App({ preview = false }) {
   const [monthIsLoading, setMonthIsLoading] = useState({});
   const [timeSlotsAreLoading, setTimeSlotsAreLoading] = useState({});
   const [inviteCode, setinviteCode] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState(null);
+  const [userName, setUserName] = useState(null);
   const [requiresInvite, setRequiresInvite] = useState(false);
   const [popup, setPopup] = useState({
     open: false,
@@ -64,6 +67,7 @@ function App({ preview = false }) {
         meetings,
         invite,
         requires_invite,
+        is_logged_in,
        } = window.vz_calendar_view_params;
         setCalendarId(calendar_id);
         setRestUrl(rest_url);
@@ -77,6 +81,7 @@ function App({ preview = false }) {
         setUserMeetings(meetings);
         setinviteCode(invite);
         setRequiresInvite(requires_invite);
+        setIsLoggedIn(is_logged_in === "true");
     }
   }, []);
   
@@ -241,6 +246,10 @@ function App({ preview = false }) {
       nonce: restNonce,
       invite: inviteCode,
     };
+    if(!isLoggedIn) {
+      data.user_email = userEmail;
+      data.user_name = userName;
+    }
     try {
       setConfirmationIsLoading(true);
       const response = await api('confirm', data);
@@ -262,12 +271,20 @@ function App({ preview = false }) {
     } catch (error) {
       console.error(error);
       setConfirmationIsLoading(false);
+      let message = _vz('fetching-error')
+      if (error.response.data.code === 'email_exists') {
+        message = _vz('email-exists-error');
+      }
       setPopup({
         open: true,
-        message: 'There was an error fetching the time slots. Please try again later.',
+        message,
         type: 'error'
       });
     }
+  }
+
+  function userIsLoggedIn() {
+    return window.vz_calendar_view_params?.is_logged_in;
   }
 
   function formatSelectedTimeSlot() {
@@ -339,15 +356,37 @@ function App({ preview = false }) {
         lockedTimeSlots={lockedTimeSlots}
       />
 
-      {( (selectedTimeSlot || previewMode) &&
+      {((selectedTimeSlot || previewMode) &&
         <div className="vz-meeting-confirmation">
           <div className="vz-am__confirmation-box">
-            <h2>
+            <h2 className="vz-meeting-confirmation">
               {_vz('meeting-confirmation')}
             </h2>
             <p>
               {selectedTimeSlot ? `${_vz('you-selected')} ${formatDateReadable(selectedTimeSlot)} ${_vz('for-meeting')}` : _vz('please-select-time-slot')}
             </p>
+            { (!isLoggedIn) && (
+              <div className="vz-am__registration-form">
+                <div>
+                <label>
+                  {_vz('your-email')}
+                </label>
+                <input type="email"
+                        value={userEmail}
+                        onChange={(e) => setUserEmail(e.target.value)} 
+                        placeholder={_vz('email-placeholder')} />
+                </div>
+                <div>
+                <label>
+                  {_vz('your-name')}
+                </label>
+                <input type="text"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)} 
+                        placeholder={_vz('name-placeholder')} />
+                </div>
+              </div>
+            )}
             <button 
               disabled={confirmationIsLoading}
               className="vz-am__confirmation-button"

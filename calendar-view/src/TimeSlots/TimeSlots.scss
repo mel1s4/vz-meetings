@@ -1,7 +1,7 @@
 
 .vz-time-slots {
   width: fit-content;
-  max-width: 11em;
+  max-width: 14em;
 
   p {
     margin: 0;
@@ -25,12 +25,11 @@
 .vz-am__time-slots__list,
 .vz-am__loading-timeslots {
   list-style: none;
-  padding: 0;
   display: grid;
   width: min-content;
   grid-template-columns: 1fr 1fr;
   gap: 0.5em;
-
+  padding: 0.3em;
   max-height: 12em;
   overflow-y: auto;
   overflow-x: hidden;
@@ -56,6 +55,7 @@
 .vz-am__time-slots__item {
   margin: 0;
   button {
+    text-wrap: nowrap;
     transition: all 0.3s;
     font-size: 1em;
     padding: 0.5em 1em;

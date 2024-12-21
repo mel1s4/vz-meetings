@@ -40,8 +40,15 @@ export const formatDateReadable = (date = new Date()) => {
   const day = date.toLocaleString(lang, { weekday: 'long' });
   const month = date.toLocaleString(lang, { month: 'long' });
   const year = date.toLocaleString(lang, { year: 'numeric' });
+  const hourtime = date.toLocaleString(lang, { hour: '2-digit', minute: '2-digit', hour12: true });
+  if (lang === 'es') {
+    return "el " + day + ", " + date.getDate() + ", de " + month + " de " + year + " a las " + hourtime; 
+  }
 
-  return "el " + day + " " + date.getDate() + " de " + month + " de " + year;
+  if (lang === 'en') {
+    return day + ", " + month + " " + date.getDate() + ", " + year + " at " + hourtime;
+  }
+
 };
 
 const translations = {

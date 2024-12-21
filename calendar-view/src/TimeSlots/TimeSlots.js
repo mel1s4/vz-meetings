@@ -48,10 +48,7 @@ export default function TimeSlots({
   }
 
   function noTimeSlots() {
-    if (lockedTimeSlots) return true;
-    if (timeslotsAreReady()) {
-      return timeSlots[selectedYear][selectedMonth + 1][selectedDay].length === 0;
-    }
+    return timeslotsAreReady() && timeSlots[selectedYear][selectedMonth + 1][selectedDay].length === 0;
   }
 
   function getCurrentTimeSlots() {

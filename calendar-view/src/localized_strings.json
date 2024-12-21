@@ -56,8 +56,8 @@
     "es": "minutos por cita"
   },
   "meeting-confirmation": {
-    "en": "Meeting Confirmation",
-    "es": "Confirmar datos de su cita"
+    "en": "Your meeting has been scheduled",
+    "es": "Su cita se ha registrado"
   },
   "loading": {
     "en": "Loading...",
@@ -98,5 +98,33 @@
   "requires-invite": {
     "en": "Requires Invite Code",
     "es": "Requiere de un Código de Invitación"
+  },
+  "your-name": {
+    "en": "Your Name",
+    "es": "Tu Nombre"
+  },
+  "your-email": {
+    "en": "Your Email",
+    "es": "Correo Electrónico"
+  },
+  "email-placeholder": {
+    "en": "example@mail.com",
+    "es": "ejemplo@correo.com"
+  },
+  "please-select-time-slot": {
+    "en": "Please select a time slot",
+    "es": "Por favor seleccione un horario"
+  },
+  "name-placeholder": {
+    "en": "John Doe",
+    "es": "Juan Pérez"
+  },
+  "meeting-confirmed": {
+    "en": "Meeting Confirmed",
+    "es": "Cita Confirmada"
+  },
+  "email-exists-error": {
+    "en": "Please log in to schedule your meeting whit this email.",
+    "es": "Inicia sesión para programar tu cita con este correo."
   }
 }
