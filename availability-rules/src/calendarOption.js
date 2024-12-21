@@ -50,11 +50,13 @@ function CalendarOptions ({
           <label className="vz-toggle-switch">
             <input type="checkbox"
                   onClick={e => setCalendarEnabled(e.target.checked)}
-                  { ...(calendarEnabled == 'on' ? {defaultChecked: true} : {}) }
-                  name="vz_am_enabled" />
+                  defaultChecked={calendarEnabled} />
                <span className={calendarEnabled ? '--active' : ''}>
                 Enable Calendar
               </span>
+            <input type="hidden"
+                      name="vz_am_enabled" 
+                      value={calendarEnabled} />
           </label>
         </div>
 
@@ -93,12 +95,14 @@ function CalendarOptions ({
           <div className="invite-link__container">
             <label className="vz-toggle-switch">
               <input type="checkbox"
-                    onClick={e => setRequiresInvite(e.target.checked)}
-                    { ...(requiresInvite === 'on' ? {defaultChecked: true} : {}) }                    
-                    name="vz_am_requires_invite" />
+                      onClick={e => setRequiresInvite(e.target.checked)}
+                      defaultChecked={requiresInvite} />
                 <span className={requiresInvite ? '--active' : ''}>
                   Requires Invite 
                 </span>
+                <input type="hidden"
+                        name="vz_am_requires_invite" 
+                        value={requiresInvite} />
             </label>
             { requiresInvite && 
               <button className="vz-am__copy-invite-link"

@@ -76,19 +76,6 @@ function vz_am_confirm_meeting($request) {
   ]);
 }
 
-function vzGetAvailability($calendar_id, $year = false, $month = false, $day = false) {
-  if (!$year) $year = date('Y');
-  if (!$month) $month = date('m');
-  if (!$day) $day = date('d');
-  
-  $timeslots = vz_am_get_timeslots($calendar_id, $year, $month, $day);
-  $month_availability = vz_am_get_month_availability($calendar_id, $year, $month);
-  return [
-    'timeslots' => $timeslots,
-    'available_days' => $month_availability,
-  ];
-}
-
 function vz_am_get_days_of_month($month, $year) {
   $days = [];
   $first_day = new DateTime("$year-$month-01");
@@ -139,26 +126,33 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
   $max_days_in_advance = $max_days_in_advance ? $max_days_in_advance : 60;
   $today = new DateTime();
 
-  if ($today->format('Y-m') > "$year-$month" || "$year-$month" > $today->add(new DateInterval('P' . $max_days_in_advance . 'D'))->format('Y-m')) {
-    return;
-  }
 
-  // // if month is more than 60 days in the future, return empty array
-  // if ($today->add(new DateInterval('P' . $max_days_in_advance . 'D'))->format('Y-m') < "$year-$month") {
-  //   return [];
-  // }
-
-  // sort the rules by id
+  // obey rule hierachy
   usort($availability_rules, function($a, $b) {
     return $a->id - $b->id;
   });
+
+
+
   $days = vz_am_get_days_of_month($month, $year);
   $available_days = [];
+  $limit_date = $today->setTime(0, 0);
+  $limit_date->add(new DateInterval('P' . $max_days_in_advance . 'D'));
+
+  $limit_date_next_month = new DateTime($limit_date->format('Y-m-d'));
+  $limit_date_next_month->add(new DateInterval('P1M'));
+  $limit_date_next_month->setTime(0, 0);
+  
+  $request_first_day_of_month = new DateTime("$year-$month-01");
+  if ($request_first_day_of_month >= $limit_date_next_month) {
+    return []; // helps me sleep at night
+  }
 
   /* 
   Rule structure: 
     "id": 1, // position in array
-    "name": "New Rule", 
+    "name": 
+    "New Rule", 
     "type": "between-dates",
     "action": "unavailable", unavailable or available
     "includeTime": false,
@@ -203,10 +197,9 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
       $weekdays = $rule->weekdays;
       $start_date = new DateTime("$year-$month-01");
       $end_date = new DateTime("$year-$month-" . $start_date->format('t'));
-      // $end_date->add(new DateInterval('P1D'));
       $interval = new DateInterval('P1D');
       $period = new DatePeriod($start_date, $interval, $end_date, DatePeriod::INCLUDE_END_DATE);
-      foreach ($period as $day) { // this is not iterating to the last day of the month
+      foreach ($period as $day) {
         $week_day = $day->format('N');
         if (in_array($week_day, $weekdays)) {
           $available_days[$day->format('d')] = $available;
@@ -215,24 +208,19 @@ function vz_am_get_month_availability($calendar_id, $year, $month) {
     }
   }
 
-  // remove days that are beyond the 60 days mark
-  $limit_date = $today->setTime(0, 0);
-  $limit_date->add(new DateInterval('P' . $max_days_in_advance . 'D'));
   foreach ($available_days as $day => $available) {
     $date = new DateTime("$year-$month-$day");
     if ($date > $limit_date || !$available) {
       unset($available_days[$day]);
     }
   }
-  $available_days['today'] = $today->format('Y-m-d');
-  $available_days['limit_date'] = $limit_date->format('Y-m-d');
-  $available_days['max_days_in_advance'] = $max_days_in_advance;
 
   ksort($available_days);
   return $available_days;
 }
 
 function vzFormatFrame($available, $start = false, $end = false) {
+  // formatted to the website timezone, as the rules where made there
   $website_timezone = new DateTimeZone(get_option('timezone_string'));
   if (!$start) {
     $start = '00:00';
@@ -259,41 +247,53 @@ function vz_am_timeslots($request) {
   $month = $request->get_param('month');
   $year = $request->get_param('year');
   $day = $request->get_param('day');
-  // return vz_am_get_timeslots($calendar_id, $year, $month, $day);
+  $visitor_time_zone = $request->get_param('timezone');
+
   return rest_ensure_response( [
-    'timeslots' => vz_am_get_timeslots($calendar_id, $year, $month, $day),
+    'timeslots' => vz_am_get_timeslots($calendar_id, $year, $month, $day, $visitor_time_zone),
   ]);
 }
 
-function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
-  $calendar = get_post($calendar_id);
+
+# The heart of the availability system and the whole damn plugin
+function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
   $duration = get_post_meta($calendar_id, 'vz_am_duration', true);
   $rest = get_post_meta($calendar_id, 'vz_am_rest', true);
   $availability_rules = JSON_decode(get_post_meta($calendar_id, 'vz_availability_rules', true));
-  $day_date = new DateTime("$year-$month-$day");
+  // timezone example = "America/New_York"
+  $visitor_timezone = new DateTimeZone($timezone);
+  $website_timezone = new DateTimeZone(get_option('timezone_string'));
+  
+  // Request the day scope of the visitor
+  $day_date = new DateTime("$year-$month-$day 00:00", $visitor_timezone);
+  $day_date_end = new DateTime("$year-$month-$day 23:59", $visitor_timezone);
+  $day_date->setTimezone($website_timezone);
+  $day_date_end->setTimezone($website_timezone);
+
   $day_of_week = $day_date->format('N');
   $day_of_month = $day_date->format('d');
   $availability_frames = [];
 
+  // this will create "availability frames" that will be used to determine the available frames, used to create the timeslots
   foreach ($availability_rules as $index => $rule) {
     $available = $rule->action === 'available';
-    // if specific date and is not equal to the current date, skip
     if ($rule->type === 'specific-date' && $rule->specificDate !== "$year-$month-$day") {
       continue;
-    }
+    } 
     if (!$rule->includeTime) {
       // specific-date
-      if ($rule->type === 'specific-date' && $rule->specificDate === "$year-$month-$day") {
+      if ($rule->type === 'specific-date') {
         $availability_frames[] = vzFormatFrame($available);
-        continue; // kinda redundant maybe?
+        continue;
       }
       // between-dates
       if ($rule->type === 'between-dates') {
-        $rule_start_date = new DateTime($rule->startDate);
-        $rule_end_date = new DateTime($rule->endDate);
+        
+        $rule_start_date = new DateTime($rule->startDate, $website_timezone);
+        $rule_end_date = new DateTime($rule->endDate, $website_timezone);
         if ($day_date >= $rule_start_date && $day_date <= $rule_end_date) {
           if (!$rule->showWeekdays || in_array($day_of_week, $rule->weekdays)) 
-            $availability_frames[$index] = vzFormatFrame($available);
+            $availability_frames[] = vzFormatFrame($available);
         }
       }
 
@@ -313,8 +313,8 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
       }
 
       if ($rule->type === 'between-dates') {
-        $start_date = new DateTime($rule->startDate);
-        $end_date = new DateTime($rule->endDate);
+        $start_date = new DateTime($rule->startDate, $website_timezone);
+        $end_date = new DateTime($rule->endDate, $website_timezone);
         if ($day_date < $start_date || $day_date > $end_date){
           // if its out of range
            continue;
@@ -329,40 +329,93 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
     }
   }
 
-  $timeslots = [];
-  // start time is the lowest start time of all the available frames
-  $start_time = new DateTime('23:59');
-  // end time is the highest end time of all the available frames
-  $end_time = new DateTime('00:00');
+  // availability frames are added and subtracted until the available frames are rendered
+  // the available frames are used to create the timeslots
+  $available_frames = [];
+  $availability_frames = array_reverse($availability_frames); // inverse the availability frames - obey rule hierachy
   foreach ($availability_frames as $frame) {
-    $start = new DateTime($frame['start']);
-    $end = new DateTime($frame['end']);
-    if ($start < $start_time) {
-      $start_time = $start;
+    $available = $frame['available'];
+    $start = new DateTime($frame['start'], $website_timezone); // its only time
+    $end = new DateTime($frame['end'], $website_timezone); // its only time
+    
+    if (sizeof($available_frames) > 0) {
+      foreach ($available_frames as $id => $aframe) {
+        $frame_start = new DateTime($frame['start'], $website_timezone); // its only time
+        $frame_end = new DateTime($frame['end'], $website_timezone); // its only time
+
+
+        // availability frame covers the available frame
+        if ($start <= $frame_start && $end >= $frame_end) {
+          if ($available) {
+            $available_frames[$id]['start'] = $start;
+            $available_frames[$id]['end'] = $end;
+          } else {
+            unset($available_frames[$id]);
+          }
+        } else if ($start <= $frame_start && $end < $frame_end) {
+          // start cut and addition
+          if ($available) {
+            // extend frame
+            $available_frames[$id]['start'] = $start;
+          } else {
+            // shorten frame
+            $available_frames[$id]['start'] = $end;
+          }
+        } else if ($start > $frame_start && $end >= $frame_end) {
+          // end cut and addition
+          if ($available) {
+            // extend frame
+            $available_frames[$id]['end'] = $end;
+          } else {
+            // shorten frame
+            $available_frames[$id]['end'] = $start;
+          }
+        } else if ($start > $frame_start && $fend < $frame_end) {
+          // middle cut or ignore
+          if ($available) {
+            // ignore
+          } else {
+            // split frame
+            $available_frames[$id]['end'] = $start;
+            $available_frames[] = [
+              "start" => $start,
+              "end" => $end,
+              "available" => false,
+            ];
+          }
+        }
+      } 
+    }  else if ($available) {
+      $available_frames[] = [
+        "start" => $start, // H:i
+        "end" => $end,
+      ];
     }
-    if ($end > $end_time) {
-      $end_time = $end;
-    }
+  }
+
+
+  if (!is_numeric($duration)) {
+    $duration = 30;
+  }
+  if (!is_numeric($rest)) {
+    $rest = 30;
   }
   $slot_total_duration = $duration + $rest;
   $interval = new DateInterval('PT' . $slot_total_duration . 'M');
-  $period = new DatePeriod($start_time, $interval, $end_time);
   
-  // inverse the availability frames
-  $availability_frames = array_reverse($availability_frames);
-  foreach ($availability_frames as $frame) {
-    $start = new DateTime($frame['start']);
-    $end = new DateTime($frame['end']);
-    $available = $frame['available'];
-    $slot = clone $start;
-    while ($slot <= $end) {
-      $timeslots[$slot->format('H:i')] = $available;
-      $slot->add($interval);
-    }
+  $timeslots = [];
+  $slot = $day_date;
+  $slot_end_time = clone $slot;
+  $slot_duration_interval = new DateInterval('PT' . $duration . 'M');
+  $slot_end_time = $slot_end_time->add($slot_duration_interval);
+
+  while ($slot < $day_date_end) {
+    $timeslots[] = clone $slot;
+    $slot = $slot->add($interval);
+    // $slot_end_time = $slot->add($slot_duration_interval);
   }
 
-
-  // query the database for meetings 
+  // query the database for meetings in the same day and remove the timeslots that are already taken
   $args = [
     'post_type' => 'vz-meeting',
     'posts_per_page' => -1,
@@ -375,41 +428,40 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day) {
       [
         'key' => 'date_time',
         'compare' => '>=',
-        'value' => "$year-$month-$day 00:00",
+        'value' => $day_date->format('Y-m-d H:i'),
+        'type' => 'DATETIME',
       ],
       [
         'key' => 'date_time',
         'compare' => '<=',
-        'value' => "$year-$month-$day 23:59",
+        'value' => $day_date_end->format('Y-m-d H:i'),
+        'type' => 'DATETIME',
       ],
     ],
   ];
 
-  // remove meetings from timeslots
   $meetings_ids = get_posts($args);
   if (!empty($meetings_ids)) {
-    foreach ($meetings as $meeting) {
-      $date_time = new DateTime(get_post_meta($meeting->ID, 'date_time', true));
-      $start = $date_time->format('H:i');
-      $end = $date_time->add(new DateInterval('PT' . $slot_total_duration . 'M'))->format('H:i');
+    foreach ($meetings_ids as $meeting) {
+      $meet_date_time = new DateTime(get_post_meta($meeting->ID, 'date_time', true), $website_timezone);
+      $start = $meet_date_time->format('H:i');
+      $end = $meet_date_time->add(new DateInterval('PT' . $slot_total_duration . 'M'))->format('H:i');
+
       foreach ($timeslots as $time => $available) {
         if ($time >= $start && $time < $end) {
-          $timeslots[$time] = false;
+          unset($timeslots[$time]);
         }
       }
     }
   }
-  
-  $cTimeslots = [];
-  // remove unavailable timeslots
-  foreach ($timeslots as $time => $available) {
-    if ($available) {
-      $cTimeslots[] = $time;
-    }
-  }
 
-  return $timeslots;
+  return [
+    'timeslots' => $timeslots,
+    'meeting_ids' => $meetings_ids,
+    'interval' => $slot_total_duration,
+  ];
 }
+
 
 function vz_am_make_invite_link($calendar_id, $random_id) {
   $calendar_slug = get_post_field('post_name', $calendar_id);

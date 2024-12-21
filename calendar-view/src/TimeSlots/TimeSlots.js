@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DateTime } from 'luxon';
 import {_vz, Month, formatDate} from '../translations';
 import './TimeSlots.scss';
 
@@ -12,12 +13,9 @@ export default function TimeSlots({
   timeSlotsAreLoading,
   setSelectedTimeSlot,
   timeZone,
+  visitorTimeZone,
   lockedTimeSlots,
 }) {
-
-  const [visitorTimeZone, setVisitorTimeZone] = useState(
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  );
 
   function selectedDateFormatted() {
     if (
@@ -30,20 +28,19 @@ export default function TimeSlots({
     return
   }
 
-  function selectTimeSlot(e, start) {
+  function selectTimeSlot(e, timeObject) {
     e.preventDefault();
-
-    const day = selectedDay;
-    const month = selectedMonth + 1;
-    const year = selectedYear;
-
-    const date = new Date(year, month - 1, day);
-    const [hours, minutes] = start.split(':');
-    date.setHours(hours);
-    date.setMinutes(minutes);
+    /* 
+      {
+        date: "2024-12-28 02:30:00.000000"
+        timezone: "America/Mexico_City"
+        timezone_type: 3 
+      }
+    */
+    const timeDate = timeObject.date.replace(" ", "T");
+    const date = DateTime.fromISO(timeDate, { zone: timeObject.timezone });
     
-
-    setSelectedTimeSlot(date);
+    setSelectedTimeSlot(date.toJSDate());
   }
 
 
@@ -63,9 +60,35 @@ export default function TimeSlots({
   function noTimeSlots() {
     if (lockedTimeSlots) return true;
     if (timeslotsAreReady()) {
-      return Object.keys(timeSlots[selectedYear][selectedMonth + 1][selectedDay]).length === 0;
+      return timeSlots[selectedYear][selectedMonth + 1][selectedDay].length === 0;
     }
   }
+
+  function getCurrentTimeSlots() {
+    if (timeslotsAreReady()) {
+      
+      if (!timeSlots ||
+        !timeSlots[selectedYear]
+        || !timeSlots[selectedYear][selectedMonth + 1]
+        || !timeSlots[selectedYear][selectedMonth + 1][selectedDay]
+        || timeSlots[selectedYear][selectedMonth + 1][selectedDay].length === 0
+      ) return [];
+      else 
+        return timeSlots[selectedYear][selectedMonth + 1][selectedDay];
+    }
+    return [];
+  }
+
+
+  function formatSlotTimeObject(timeObject) {
+    // timeObject.date, timeObject.timezone
+    const timeDate = timeObject.date.replace(" ", "T");
+    const date = DateTime.fromISO(timeDate, { zone: timeObject.timezone });
+    // make date in visitor timezone
+    const visitorDate = date.setZone(visitorTimeZone);
+    return visitorDate.toLocaleString(DateTime.TIME_SIMPLE);
+  }
+
 
   
 
@@ -85,18 +108,21 @@ export default function TimeSlots({
       )
     }
     <ul className="vz-am__time-slots__list">
-      { timeslotsAreReady() && Object.keys(timeSlots[selectedYear][selectedMonth + 1][selectedDay]).map((time, index) => (
+      { timeslotsAreReady() && getCurrentTimeSlots().map((
+        time, index
+      ) => (
         <li className="vz-am__time-slots__item" key={index}>
           <button
             onClick={(e) => selectTimeSlot(e, time)}
             className={`vz-am__time-slot__button ` + (isSelectedTimeSlot(time) ? '--selected' : '')}
           >
-            {time}
+            {formatSlotTimeObject(time)}
           </button>
         </li>
       ))
       }
     </ul>
+
     { noTimeSlots() && (
         <p>
           {_vz('no-meetings')}
@@ -109,7 +135,7 @@ export default function TimeSlots({
     <p className="vz-am__website-timezone">
       <b> {_vz('website-timezone-is') } </b> {timeZone}
     </p>
-    
+
   </div>
   )
 }

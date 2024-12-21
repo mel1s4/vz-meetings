@@ -38,7 +38,7 @@ function App() {
   const [Rest, setRest] = useState(0);
   const [Duration, setDuration] = useState(0);
   const [calendarEnabled, setCalendarEnabled] = useState(false);
-  const [requiresInvite, setRequiresInvite] = useState(false);
+  const [requiresInvite, setRequiresInvite] = useState(true);
 
   function moveRule(e, direction, id) {
     e.preventDefault();
@@ -136,8 +136,8 @@ function App() {
       setMaxDaysInAdvance(window.vz_availability_rules_params.maximum_days_in_advance);
       setRest(parseInt(window.vz_availability_rules_params.meeting_rest));
       setDuration(parseInt(window.vz_availability_rules_params.meeting_duration));
-      setCalendarEnabled(window.vz_availability_rules_params.enabled);
-      setRequiresInvite(window.vz_availability_rules_params.requires_invite);
+      setCalendarEnabled(window.vz_availability_rules_params.enabled !== '');
+      setRequiresInvite(window.vz_availability_rules_params.requires_invite !== '');
       setCalendarId(window.vz_availability_rules_params.calendar_id);
     }
   } , []);

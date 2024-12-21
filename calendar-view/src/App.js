@@ -20,6 +20,9 @@ function App({ preview = false }) {
   const [timeSlots, setTimeSlots] = useState({});
   const [restNonce, setRestNonce] = useState(null);
   const [timeZone, setTimeZone] = useState(null);
+  const [visitorTimeZone, setVisitorTimeZone] = useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
   const [restUrl, setRestUrl] = useState('http://localhost/wp-json/');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [monthIsLoading, setMonthIsLoading] = useState({});
@@ -45,44 +48,10 @@ function App({ preview = false }) {
 
   useEffect(() => {
     const today = new Date();
-    setCalendarId(6);
     setSelectedDay(today.getDate());
     setSelectedMonth(today.getMonth());
     setSelectedYear(today.getFullYear());
 
-    const exampleTimeSlot = {
-      '11:00': true,
-      '11:48': true,
-      '12:36': true,
-      '13:24': true,
-      '14:12': true,
-      '15:00': true,
-      '15:48': true,
-      '16:36': true,
-    };
-    const exampleMeetings = [
-        {
-            "id": 36,
-            "date_time": "2024-12-18T23:00:00.000Z",
-            "duration": "45"
-        },
-        {
-            "id": 35,
-            "date_time": "2024-12-13T23:00:00.000Z",
-            "duration": "45"
-        },
-        {
-            "id": 34,
-            "date_time": "2024-12-20T00:36:00.000Z",
-            "duration": "45"
-        }
-    ];
-    const exampleTimeSlots = {};
-    exampleTimeSlots[today.getFullYear()] = {};
-    exampleTimeSlots[today.getFullYear()][today.getMonth() + 1] = {};
-    exampleTimeSlots[today.getFullYear()][today.getMonth() + 1][today.getDate()] = exampleTimeSlot;
-    setTimeSlots(exampleTimeSlots);
-    setUserMeetings(exampleMeetings);
     if (window?.vz_calendar_view_params && !previewMode) {
       const { 
         calendar_id,
@@ -105,7 +74,6 @@ function App({ preview = false }) {
         const nmA = {};
         nmA[today.getFullYear() + '-' + (today.getMonth() + 1)] = availability?.available_days;
         setMonthAvailability(nmA);
-        setTimeSlots(availability?.timeslots);
         setUserMeetings(meetings);
         setinviteCode(invite);
         setRequiresInvite(requires_invite);
@@ -150,9 +118,11 @@ function App({ preview = false }) {
       if (!newTimeSlots[selectedYear][selectedMonth + 1]) {
         newTimeSlots[selectedYear][selectedMonth + 1] = {};
       }
-      newTimeSlots[selectedYear][selectedMonth + 1][selectedDay] = response.data.timeslots;
-      setTimeSlots(newTimeSlots);
+
       
+      const nTimeSlots = response.data.timeslots.timeslots;
+      newTimeSlots[selectedYear][selectedMonth + 1][selectedDay] = nTimeSlots;
+      setTimeSlots(newTimeSlots);
       const pLoading2 = { ...timeSlotsAreLoading };
       pLoading2[selectedYear + '-' + (selectedMonth + 1) + '-' + selectedDay] = false;
       setTimeSlotsAreLoading(pLoading2);
@@ -247,11 +217,12 @@ function App({ preview = false }) {
   }
 
   async function api(endpoint, data) {
-    return await axios.post( restUrl + 'vz-am/v1/' + endpoint, data, {
+    const params = {... data, language: selectedLanguage, timezone: visitorTimeZone};
+    return await axios.post( restUrl + 'vz-am/v1/' + endpoint, params, {
       headers: {
         'X-WP-Nonce': restNonce
       }
-    });
+  });
   }
 
   function lockedTimeSlots() {
@@ -326,10 +297,10 @@ function App({ preview = false }) {
         </div>
       )}
 
-      {(meetingWasConfirmed) && (
+      {((meetingWasConfirmed && requiresInvite && inviteCode) || (meetingWasConfirmed && !requiresInvite)) && (
         <div className="vz-am__requires-invite">
           <h3 className="vz-am__title"> 
-            {_vz('used-invite')}
+            {_vz('meeting-confirmation')}
           </h3>
         </div>
       )}
@@ -359,6 +330,7 @@ function App({ preview = false }) {
         timeSlotSize={timeSlotSize}
         timeSlotsAreLoading={timeSlotsAreLoading}
         timeZone={timeZone}
+        visitorTimeZone={visitorTimeZone}
         lockedTimeSlots={lockedTimeSlots}
       />
 
