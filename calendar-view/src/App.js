@@ -245,6 +245,7 @@ function App({ preview = false }) {
       date_time: selectedTimeSlot,
       nonce: restNonce,
       invite: inviteCode,
+      visitor_timezone: visitorTimeZone,
     };
     if(!isLoggedIn) {
       data.user_email = userEmail;
@@ -322,7 +323,9 @@ function App({ preview = false }) {
       {((meetingWasConfirmed && requiresInvite && inviteCode) || (meetingWasConfirmed && !requiresInvite)) && (
         <div className="vz-am__requires-invite">
           <h3 className="vz-am__title"> 
-            {_vz('meeting-confirmation')}
+            {_vz('meeting-was-made')} {
+              (!isLoggedIn) && (_vz('login-to-see'))
+            }
           </h3>
         </div>
       )}

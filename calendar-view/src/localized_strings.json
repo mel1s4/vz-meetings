@@ -56,8 +56,8 @@
     "es": "minutos por cita"
   },
   "meeting-confirmation": {
-    "en": "Your meeting has been scheduled",
-    "es": "Su cita se ha registrado"
+    "en": "Confirm yoou meeting details",
+    "es": "Confirmar los datos de su cita"
   },
   "loading": {
     "en": "Loading...",
@@ -126,5 +126,17 @@
   "email-exists-error": {
     "en": "Please log in to schedule your meeting whit this email.",
     "es": "Inicia sesión para programar tu cita con este correo."
+  },
+  "fetching-error": {
+    "en": "There was an error fetching the data.",
+    "es": "Hubo un error al obtener los datos."
+  },
+  "meeting-was-made": {
+    "en": "Your meeting was made successfully.",
+    "es": "Tu cita fue programada exitosamente."
+  },
+  "login-to-see": {
+    "en": "Please log in to see your meetings.",
+    "es": "Inicia sesión para ver tus citas."
   }
 }
