@@ -1,12 +1,15 @@
 <?php
 /*
-Plugin Name: Viroz Meeting Manager
-Plugin URI: https://viroz.studio/vz-meeting-manager
-Description: This plugin will help you to sell and manage your meetings for services and products.
-Version: 0.1.0
-Author: Melisa Viroz
-Author URI: https://melisaviroz.com
-License: GPL2
+* Plugin Name: Viroz Meeting Manager
+* Plugin URI: https://viroz.studio/vz-meeting-manager/
+* Description: This plugin will help you to sell and manage your meetings for services and products.
+* Version: 0.1
+* Requires at least: 6.0
+* Requires PHP: 7.2
+* Author: Melisa Viroz
+* Author URI: https://melisaviroz.com/
+* License: GPLv2
+* text-domain: vz-meeting-manager
 */
 
 if (!defined('ABSPATH')) {

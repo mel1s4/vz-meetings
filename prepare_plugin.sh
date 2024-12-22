@@ -17,7 +17,6 @@ mkdir vz-meetings/availability-rules
 cp -r availability-rules/build vz-meetings/availability-rules/build
 
 mkdir vz-meetings/calendar-view
-mkdir vz-meetings/calendar-view
 cp -r calendar-view/build vz-meetings/calendar-view/build
 
 mkdir vz-meetings/calendar-block
@@ -25,6 +24,8 @@ cp -r calendar-block/build vz-meetings/calendar-block/build
 cp -r calendar-block/src vz-meetings/calendar-block/src
 cp calendar-block/calendar-block.php vz-meetings/calendar-block/calendar-block.php
 
+
+cp -r styles vz-meetings/styles
 
 # copy all files to the plugin folder except the folders
 # find /source/folder -maxdepth 1 -type f -exec cp {} /destination/folder \;
