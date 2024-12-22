@@ -3,7 +3,7 @@ import React, { use, useState, useEffect } from 'react';
 import CalendarOptions from './calendarOption';
 function App() {
   const [timeZone, setTimeZone] = useState('');
-  const [calendarId, setCalendarId] = useState(6);
+  const [calendarId, setCalendarId] = useState(0);
   const availabilityRuleTemplate = {
     id: 0, 
     name: 'New Rule',
@@ -18,7 +18,22 @@ function App() {
     endDate: '',
     showWeekdays: false,
   };
-  const [availabilityRules, setAvailabilityRules] = useState([]);
+  const [availabilityRules, setAvailabilityRules] = useState([
+    {
+      id: 1,
+      name: 'Rule 1',
+      type: 'weekday',
+      action: 'available',
+      includeTime: true,
+      startTime: '11:00',
+      endTime: '17:00',
+      weekdays: [1, 2, 3, 4, 5],
+      specificDate: '',
+      startDate: '',
+      endDate: '',
+      showWeekdays: false,
+    }
+  ]);
   const weekdaysTemplate = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const ruleTypes = [
     {
@@ -34,9 +49,9 @@ function App() {
       value: "between-dates",
     },
   ];
-  const [maxDaysInAdvance, setMaxDaysInAdvance] = useState(0);
-  const [Rest, setRest] = useState(0);
-  const [Duration, setDuration] = useState(0);
+  const [maxDaysInAdvance, setMaxDaysInAdvance] = useState(60);
+  const [Rest, setRest] = useState(15);
+  const [Duration, setDuration] = useState(45);
   const [calendarEnabled, setCalendarEnabled] = useState(false);
   const [requiresInvite, setRequiresInvite] = useState(true);
 
@@ -130,15 +145,33 @@ function App() {
 
   useEffect(() => {
     if (window?.vz_availability_rules_params) {
-      console.log(window.vz_availability_rules_params);
-      setAvailabilityRules(window.vz_availability_rules_params.availability_rules);
-      setTimeZone(window.vz_availability_rules_params.time_zone);
-      setMaxDaysInAdvance(window.vz_availability_rules_params.maximum_days_in_advance);
-      setRest(parseInt(window.vz_availability_rules_params.meeting_rest));
-      setDuration(parseInt(window.vz_availability_rules_params.meeting_duration));
-      setCalendarEnabled(window.vz_availability_rules_params.enabled !== '');
-      setRequiresInvite(window.vz_availability_rules_params.requires_invite !== '');
-      setCalendarId(window.vz_availability_rules_params.calendar_id);
+      const {
+        availability_rules, 
+        time_zone,
+        maximum_days_in_advance,
+        meeting_rest,
+        meeting_duration,
+        enabled,
+        requires_invite,
+        calendar_id
+      } = window.vz_availability_rules_params;
+      
+      if (availability_rules !== '' && availability_rules.length > 0) 
+        setAvailabilityRules(availability_rules);
+      if (time_zone !== '') 
+        setTimeZone(time_zone);
+      if (maximum_days_in_advance !== '') 
+        setMaxDaysInAdvance(maximum_days_in_advance);
+      if (meeting_rest !== '') 
+        setRest(parseInt(meeting_rest));
+      if (meeting_duration !== '')
+        setDuration(parseInt(meeting_duration));
+      if (enabled !== '')
+        setCalendarEnabled(enabled !== '');
+      if (requires_invite !== '')
+        setRequiresInvite(requires_invite !== '');
+      if (calendar_id !== '')
+        setCalendarId(calendar_id);
     }
   } , []);
 
