@@ -8,3 +8,8 @@ This plugin will help you make calendars with custom avilability rules that will
 2. Update the permalink structure in settings > Permalinks if calendars show a #404 error
 3. Be sure to add the VZ Calendar Block to you calendar design.
 
+# What is Viroz Studio?
+A group of creative people trying to make digital prescence easier for everyone.
+
+## Follow our Updates
+<a href="https://viroz.studio/proyect/viroz-meetings/"> Click Here </a> to see the Plugin Page at <a href="https://viroz.studio/">our Website</a>
