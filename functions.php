@@ -30,8 +30,8 @@ include 'enqueue_scripts.php';
 add_action('admin_menu', 'vz_am_settings_page');
 function vz_am_settings_page() {
   add_menu_page(
-    __vz("Meetings"),
-    __vz("Meetings"),
+    __vzm("VZ Meetings"),
+    __vzm("VZ Meetings"),
     'manage_options', 
     'vz_am_settings', 
     'vz_am_settings_page_content',
@@ -39,8 +39,8 @@ function vz_am_settings_page() {
   );
   add_submenu_page(
     'vz_am_settings',
-    __vz('Settings'),
-    __vz('Settings'), 
+    __vzm('Settings'),
+    __vzm('Settings'), 
     'manage_options', 
     'vz_am_my_schedule', 
     'vz_am_settings_page_content'
@@ -48,18 +48,18 @@ function vz_am_settings_page() {
 }
 
 function vz_am_settings_page_content() {
-  echo '<h1>' . __vz("Meetings") . '</h1>';
+  echo '<h1>' . __vzm("Meetings") . '</h1>';
 }
 
 function vz_am_my_schedule_page_content() {
-  echo '<h1>' . __vz("Calendar") . '</h1>';
+  echo '<h1>' . __vzm("Calendar") . '</h1>';
   echo "<div id='vz-am-schedule'></div>";
 }
 
 function vz_am_calendar_options() {
   add_meta_box(
     'vz_am_availability_options',
-    __vz('Availability Rules'),
+    __vzm('Availability Rules'),
     'vz_am_availability_options_content',
     'vz-calendar',
     'normal',
@@ -68,7 +68,7 @@ function vz_am_calendar_options() {
 
   add_meta_box(
     'vz_am_invite_options',
-    __vz('Invite Details'),
+    __vzm('Invite Details'),
     'vz_am_invite_details_content',
     'vz-am-invite',
     'normal',
@@ -224,10 +224,10 @@ function vz_am_save_product_options($post_id) {
 // add sortable column to meetings archive page for the calendar column
 add_filter('manage_vz-meeting_posts_columns', 'vz_am_meeting_columns');
 function vz_am_meeting_columns($columns) {
-  $columns['vz_am_calendar'] = __vz('Calendar');
+  $columns['vz_am_calendar'] = __vzm('Calendar');
 
   // scheduled hour
-  $columns['vz_am_date_time'] = __vz('Date and Time');
+  $columns['vz_am_date_time'] = __vzm('Date and Time');
   return $columns;
 }
 
@@ -243,7 +243,7 @@ function vz_am_meeting_column_content($column, $post_id) {
     echo date('D, M d, Y @H:i:s', strtotime($date_time));
     // echo duration
     $duration = get_post_meta($post_id, 'duration', true);
-    echo ' (' . $duration . ' ' . __vz('minutes') . ')';
+    echo ' (' . $duration . ' ' . __vzm('minutes') . ')';
   }
 }
 
@@ -254,7 +254,7 @@ function vz_am_meeting_filter() {
   if ( $typenow === 'vz-meeting') {
     $calendars = vz_get_calendars();
     echo '<select name="calendar_id">';
-    echo '<option value="">'.__vz('All Calendars').'</option>';
+    echo '<option value="">'.__vzm('All Calendars').'</option>';
     foreach ($calendars as $calendar) {
       $selected_calendar =  '';
       if (isset($_GET['calendar_id']) && $_GET['calendar_id'] == $calendar['ID']) {
@@ -265,11 +265,11 @@ function vz_am_meeting_filter() {
     echo '</select>';
 
     $status = [
-      ['name' => 'past', 'title' => __vz('Past')],
-      ['name' => 'upcoming', 'title' => __vz('Upcoming')],
+      ['name' => 'past', 'title' => __vzm('Past')],
+      ['name' => 'upcoming', 'title' => __vzm('Upcoming')],
     ];
     echo '<select name="vz-ap-status">';
-    echo '<option value="">'.__vz('All Status').'</option>';
+    echo '<option value="">'.__vzm('All Status').'</option>';
     foreach ($status as $calendar) {
       $selected_status =  '';
       if (isset($_GET['vz-ap-status']) && $_GET['vz-ap-status'] == $calendar['ID']) {

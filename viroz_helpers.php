@@ -17,12 +17,12 @@ if (!function_exists('vz_html')) {
 
 if (!function_exists('e_vz'))  {
   function e_vz($text) {
-    echo __vz($text);
+    echo __vzm($text);
   }
 }
 
 if (!function_exists('__vz')) {
-  function __vz($text) {
+  function __vzm($text) {
     return __($text, 'vz-am');
   }
 }

@@ -2,8 +2,13 @@
 
 add_action('admin_enqueue_scripts', 'vz_am_enqueue_styles');
 function vz_am_enqueue_styles() {
-  wp_enqueue_style('vz-am-styles', plugin_dir_url(__FILE__) . 'styles/style.css');  
-  if (get_current_screen()->post_type === 'vz-calendar') {
+  wp_enqueue_style('vz-am-styles', plugin_dir_url(__FILE__) . 'styles/style.css'); 
+  
+  $post_id = get_the_ID();
+  $is_calendar = get_post_type($post_id) === 'vz-calendar';
+  $is_new_post_page = get_current_screen()->post_type === 'vz-calendar' && get_current_screen()->base === 'post' && get_current_screen()->action === 'add';
+  
+  if ($is_calendar || $is_new_post_page) {
     wp_enqueue_style('vz-availability-rules-styles', plugin_dir_url(__FILE__) . 'availability-rules/build/static/css/main.css', array(), '1.0.0', 'all');
     wp_enqueue_script('vz-availability-rules', plugin_dir_url(__FILE__) . 'availability-rules/build/static/js/main.js' , array('wp-element'), '0.0.1', true);
     $availability_rules = get_post_meta(get_the_ID(), 'vz_availability_rules', true);
