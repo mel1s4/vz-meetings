@@ -50,14 +50,19 @@ function vz_send_password_reset_email($user_id) {
 }
 
 function vz_get_email_template($template_name, $data = []) {
+  $website_language = get_bloginfo('language');
+
+  $lang = 'en';
+  if (strpos($website_language, 'es') !== false) {
+    $lang = 'es';
+  }
 
   ob_start();
-  include plugin_dir_path(__FILE__) . "mail-templates/$template_name.php";
+  include plugin_dir_path(__FILE__) . "mail-templates/$lang/$template_name.html";
   $template = ob_get_clean();
 
-  // if there is an error including the file
   if ($template === false) {
-    return "algo pashon";
+    return "Error loading template";
   }
 
   foreach ($data as $key => $value) {
@@ -73,9 +78,8 @@ function vz_send_meeting_confirmation_email($meeting_id, $visitor_timezone) {
   $meeting_start = new DateTime(get_post_meta($meeting_id, 'date_time', true));
   $timezone = new DateTimeZone($visitor_timezone);
   $meeting_start->setTimezone($timezone);
-  $meeting_start_locale = $meeting_start->format('Y-m-d h:i A');
+  $meeting_start_locale = $meeting_start->format('h:i A');
   $meeting_date_locale = $meeting_start->format('l, F j, Y');
-
   $data = [
     "user_name" => $user->display_name,
     "calendar_title" => get_the_title(get_post_meta($meeting_id, 'calendar_id', true)),
