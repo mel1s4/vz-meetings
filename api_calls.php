@@ -32,47 +32,61 @@ function vz_create_meeting_title($meeting) {
   return "$user_name | $date_time_str";
 }
 
-function vz_get_email_template($template_name) {
-  $template = file_get_contents(__DIR__ . "/mail-templates/$template_name.html");
+function vz_send_password_reset_email($user_id) {
+  $user = get_userdata($user_id);
+  $user_login = $user->user_login;
+  $user_email = $user->user_email;
+  $user_name = $user->display_name;
+  $reset_key = get_password_reset_key($user);
+  $reset_link = network_site_url("wp-login.php?action=rp&key=$reset_key&login=" . rawurlencode($user_login), 'login');
+  $data = [
+    "user_name" => $user_name,
+    "reset_link" => $reset_link,
+    "site_name" => get_bloginfo('name'),
+    "site_url" => get_site_url(),
+  ];
+  $template = vz_get_email_template('password_reset', $data);
+  return wp_mail($user_email, 'Password Reset', $template, ['Content-Type: text/html; charset=UTF-8']);
+}
+
+function vz_get_email_template($template_name, $data = []) {
+
+  ob_start();
+  include plugin_dir_path(__FILE__) . "mail-templates/$template_name.php";
+  $template = ob_get_clean();
+
+  // if there is an error including the file
+  if ($template === false) {
+    return "algo pashon";
+  }
+
+  foreach ($data as $key => $value) {
+    $template = str_replace("{{" . $key . "}}", $value, $template);
+  }
+  
   return $template;
 }
 
-function vz_send_password_reset_email($user_id) {
-  $user = get_user_by('id', $user_id);
-  $user_login = $user->user_login;
-  $user_email = $user->user_email;
-  $key = get_password_reset_key($user);
-  $reset_link = network_site_url("wp-login.php?action=rp&key=$key&login=" . rawurlencode($user_login), 'login');
-  $template = vz_get_email_template('password_reset');
-  $template = str_replace('{{reset_link}}', $reset_link, $template);
-  $template = str_replace('{{site_url}}', get_site_url(), $template);
-  $template = str_replace('{{site_name}}', get_bloginfo('name'), $template);
-  $template = str_replace('{{user_displayname}}', $user->display_name, $template);
-  wp_mail($user_email, 'Password Reset', $message);
-}
-
 function vz_send_meeting_confirmation_email($meeting_id, $visitor_timezone) {
-  $meeting = get_post($meeting_id);
-  $calendar_id = get_post_meta($meeting_id, 'calendar_id', true);
-  $calendar = get_post($calendar_id);
-  $calendar_title = $calendar->post_title;
-  $date_time = new DateTime(get_post_meta($meeting_id, 'date_time', true));
-  $date_time->setTimezone(new DateTimeZone($visitor_timezone));
-  $date_time_str = $date_time->format('Y-m-d H:i');
-  $duration = get_post_meta($meeting_id, 'duration', true);
   $user_id = get_post_meta($meeting_id, 'user_id', true);
-  $user = get_user_by('id', $user_id);
-  $user_name = $user->display_name;
-  $user_email = $user->user_email;
-  $template = vz_get_email_template('meeting_confirmation');
-  $template = str_replace('{{site_url}}', get_site_url(), $template);
-  $template = str_replace('{{site_name}}', get_bloginfo('name'), $template);
-  $template = str_replace('{{calendar_title}}', $calendar_title, $template);
-  $template = str_replace('{{date_time}}', $date_time_str, $template);
-  $template = str_replace('{{duration}}', $duration, $template);
-  $template = str_replace('{{user_name}}', $user_name, $template);
-  $template = str_replace('{{user_email}}', $user_email, $template);
-  wp_mail($user_email, 'Meeting Confirmation', $template);
+  $user = get_userdata($user_id);
+  $meeting_start = new DateTime(get_post_meta($meeting_id, 'date_time', true));
+  $timezone = new DateTimeZone($visitor_timezone);
+  $meeting_start->setTimezone($timezone);
+  $meeting_start_locale = $meeting_start->format('Y-m-d h:i A');
+  $meeting_date_locale = $meeting_start->format('l, F j, Y');
+
+  $data = [
+    "user_name" => $user->display_name,
+    "calendar_title" => get_the_title(get_post_meta($meeting_id, 'calendar_id', true)),
+    "date_time" => $meeting_date_locale . ' @ ' . $meeting_start_locale,
+    "duration" => get_post_meta($meeting_id, 'duration', true),
+    "site_name" => get_bloginfo('name'),
+    "site_url" => get_site_url(),
+  ];
+  $template = vz_get_email_template('meeting_confirmation', $data);
+
+  return wp_mail($user->user_email, 'Meeting Confirmation', $template, ['Content-Type: text/html; charset=UTF-8']);
 }
 
 function vz_am_confirm_meeting($request) {

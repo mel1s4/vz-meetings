@@ -8,6 +8,7 @@ rm vz-meetings.zip
 # cd ../calendar-view
 # sh build-and-rename.sh
 # cd ../calendar-block
+# npm install
 # npm run build
 # cd ../
 
@@ -24,6 +25,8 @@ cp -r calendar-block/build vz-meetings/calendar-block/build
 cp -r calendar-block/src vz-meetings/calendar-block/src
 cp calendar-block/calendar-block.php vz-meetings/calendar-block/calendar-block.php
 
+mkdir vz-meetings/mail-templates
+cp -r mail-templates vz-meetings/
 
 cp -r styles vz-meetings/styles
 
