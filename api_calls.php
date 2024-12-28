@@ -150,12 +150,7 @@ function vz_am_confirm_meeting($request) {
   }
 
   vz_send_meeting_confirmation_email($new_meeting_id, $visitor_timezone);
-  // destroy invitation
-  $found = get_page_by_path($invite, OBJECT, 'vz-am-invite');
-  $invitation_used = json_encode($found);
-  if ($found) {
-    wp_delete_post($found->ID, true);
-  }
+  vz_use_invitation($invite, $new_meeting_id);
   update_post_meta($new_meeting_id, 'invitation_used', $invitation_used);
   return rest_ensure_response( [
     'meeting' => $new_meeting_id,
@@ -174,16 +169,7 @@ function vz_am_get_days_of_month($month, $year) {
   return $days;
 }
 
-function vz_check_invite($calendar_id, $invite) {
-  if (!get_post_meta($calendar_id, 'vz_am_requires_invite', true)) return true;
-  $found = get_page_by_path($invite, OBJECT, 'vz-am-invite');
-  if (!$found) return false;
-  if (is_wp_error($found)) return false;
-  $invite_calendar = get_post_meta($found->ID, 'calendar_id', true);
-  if (!$invite_calendar) return false;
-  if ($invite_calendar != $calendar_id) return false;
-  return true;
-}
+
 
 function vz_am_month_availability($request) {
   $calendar_id = $request->get_param('calendar_id');
@@ -533,7 +519,6 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
     // slot end time is updated automatically
   }
 
-
   return [
     'timeslots' => $timeslots,
     'meeting' => $mets,
@@ -543,16 +528,10 @@ function vz_am_get_timeslots($calendar_id, $year, $month, $day, $timezone) {
   ];
 }
 
-
-function vz_am_make_invite_link($calendar_id, $random_id) {
-  $calendar_slug = get_post_field('post_name', $calendar_id);
-  return home_url("/calendar/$calendar_slug?invite=$random_id");
-}
-
 function vz_am_create_calendar_invite($request) {
   $params = $request->get_params();
   $calendar_id = $request->get_param('calendar_id');
-  $random_id = strtoupper(wp_generate_password(6, false));
+  $random_id = strtoupper(wp_generate_password(9, false)); // 9 characters
   $invite_details = [
     'calendar_id' => $calendar_id,
     'random_id' => $random_id,
@@ -560,17 +539,41 @@ function vz_am_create_calendar_invite($request) {
   ];  
   
   $invite_id = wp_insert_post([
-    'post_type' => 'vz-am-invite',
-    'post_title' => 'Invite | ' . $invite_details['random_id'],
-    'post_name' => $invite_details['random_id'],
+    'post_type' => 'vz-invite',
+    'post_title' => 'Copied Invite for ' . get_the_title($calendar_id),
+    'post_status' => 'publish',
   ]);
 
   if (is_wp_error($invite_id)) {
     return new WP_Error('error', 'Error creating invite', ['status' => 500]);
   }
   update_post_meta($invite_id, 'calendar_id', $calendar_id);
+  update_post_meta($invite_id, 'random_code', $random_id);
+  update_post_meta($invite_id, 'vz_am_number_of_uses', 1);
+  $expiration_date = new DateTime();
+  $expiration_date->add(new DateInterval('P2D'));
+  update_post_meta($invite_id, 'vz_am_expiration_date', $expiration_date->format('Y-m-d'));
 
   return rest_ensure_response( [
     'invite' => $invite_details,
   ]);
+}
+
+function vz_check_invite($calendar_id, $invite) {
+  if (!get_post_meta($calendar_id, 'vz_am_requires_invite', true)) return true;
+  $args = [
+    'post_type' => 'vz-invite',
+    'meta_key' => 'random_code',
+    'meta_value' => $invite,
+    'fields' => 'ids',
+  ];
+  $found = get_posts($args);
+  if (!$found) return false;
+  if (is_wp_error($found)) return false;
+  $invite_calendar = get_post_meta($found[0], 'calendar_id', true);
+  if (!$invite_calendar) return false;
+  if ($invite_calendar != $calendar_id) return false;
+  $uses = get_post_meta($found[0], 'vz_am_number_of_uses', true);
+  if ($uses <= 0) return false;
+  return true;
 }

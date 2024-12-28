@@ -1,7 +1,7 @@
 <?php
 
 if (!wp_next_scheduled('vz_am_remove_old_invites')) {
-  wp_schedule_event(time(), 'hourly', 'vz_am_remove_old_invites');
+  wp_schedule_event(time(), 'daily', 'vz_am_remove_old_invites');
 }
 
 $meeting_slug = get_option('vz_am_meeting_slug', 'meeting');
@@ -39,7 +39,7 @@ register_post_type('vz-calendar', array(
 ));
 
 $invitation_slug = get_option('vz_am_invitation_slug', 'meeting');
-register_post_type('vz-am-invite', array(
+register_post_type('vz-invite', array(
   'labels' => array(
     'name' => __vzm('Invites'),
     'singular_name' => __vzm('Invite'),

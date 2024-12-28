@@ -1,4 +1,4 @@
-.vz-am__calendar-options {
+.vzm__calendar-options {
   header {
     width: stretch;
   }
@@ -8,18 +8,18 @@
   margin-bottom: 2em;
 }
 
-.vz-am__meeting-invitations {
+.vzm__meeting-invitations {
   margin-bottom: 2em;
 }
 
-.vz-am__calendar-option {
+.vzm__calendar-option {
   label {
     margin-bottom: 0.3em;
     display: block;
   }
 }
 
-.vz-am__invitations__list {
+.vzm__invitations__list {
   list-style: none;
   padding: 0;
   display: flex;
@@ -27,24 +27,28 @@
   gap: 1em;
 }
 
-.vz-am__invitation {
+.vzm__invitation {
   display: flex;
   flex-flow: row wrap;
   gap: 1em;
 }
 
-.vz-am__invitation__input {
+.vzm__invitation__input {
   display: flex;
   flex-flow: column;
   width: fit-content;
   align-items: left;
   gap: 0 0.5em;
   justify-content: center;
-  input {
+  input, select {
     font-size: 1.2em;
     padding: 0.2em;
     border: 1px solid #ccc;
     border-radius: 0.5em;
+  }
+
+  select {
+    width: 16em;
   }
 
   &.number-of-uses {
@@ -57,7 +61,15 @@
     display: flex;
     flex-flow: row;
     gap: 0.5em;
-
+    text-align: right;
+    input {
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      justify-content: flex-end;
+      display: flex;
+    }
     button {
       font-size: 1em;
       padding: 0.2em 0.6em;
@@ -69,42 +81,4 @@
     }
   }
   
-}
-
-&.vz-toggle-switch {
-  input[type=checkbox] {
-    display: none;
-  }
-
-  span {
-    width: 3.2em;
-    height: 2em;
-    background-color: #ccc;
-    border-radius:  1.5em;
-    display: block;
-    text-indent: -999px;
-    overflow: hidden;
-    position: relative;
-
-    &:after {
-      content: "";
-      top: 50%;
-      left: 50%;
-      position: absolute;
-      display: block;
-      height: 1.5em;
-      width: 1.5em;
-      background-color: #fff;
-      border-radius: 50%;
-      transition: transform 0.3s;
-      transform: translate(-90%, -50%);
-    }
-  }
-
-  input[type="checkbox"]:checked + span {
-    background-color: #0be;
-    &:after {
-      transform: translate(-10%, -50%);
-    }
-  }
 }

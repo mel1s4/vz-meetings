@@ -3,7 +3,7 @@
 add_action('admin_enqueue_scripts', 'vz_am_enqueue_styles');
 function vz_am_enqueue_styles() {
   wp_enqueue_style('vz-am-styles', plugin_dir_url(__FILE__) . 'styles/style.css'); 
-  
+  wp_enqueue_script('vz-am-scripts', plugin_dir_url(__FILE__) . 'functions.js', array('wp-element'), '0.0.1', true);
   $post_id = get_the_ID();
   $is_calendar = get_post_type($post_id) === 'vz-calendar';
   $is_new_post_page = get_current_screen()->post_type === 'vz-calendar' && get_current_screen()->base === 'post' && get_current_screen()->action === 'add';

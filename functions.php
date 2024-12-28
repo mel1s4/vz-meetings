@@ -36,6 +36,7 @@ function vz_am_settings_page() {
     'vz_am_settings', 
     'vz_am_settings_page_content',
     'dashicons-calendar-alt',
+    40
   );
   add_submenu_page(
     'vz_am_settings',
@@ -70,7 +71,7 @@ function vz_am_calendar_options() {
     'vz_am_invite_options',
     __vzm('Invite Details'),
     'vz_am_invite_details_content',
-    'vz-am-invite',
+    'vz-invite',
     'normal',
     'default'
   );
@@ -78,53 +79,7 @@ function vz_am_calendar_options() {
 
 
 function vz_am_invite_details_content($post) {
-  $calendar_ids = get_posts([
-    'post_type' => 'vz-calendar',
-    'numberposts' => -1,
-    'fields' => 'ids',
-  ]);
-  print_x($calendar_ids);
-  ?>
-  <article class="vz-am__invitation">
-    <div class="vz-am__invitation__input status">
-      <label>
-        <input type="checkbox">
-        <span>Active</span>
-      </label>
-    </div>
-    <div class="vz-am__invitation__input number-of-uses">
-      <label>
-        # of uses
-      </label>
-      <input type="number" value="1">
-    </div>
-    <div class="vz-am__invitation__input">
-      <label>
-        Expiration Date
-      </label>
-      <input type="date" value="2024-12-17">
-    </div>
-    <div class="vz-am__invitation__input">
-      <label>
-        <input type="checkbox">
-        User may reuse
-      </label>
-    <label>
-      <input type="checkbox" checked="">
-      One meeting at a time
-    </label>
-  </div>
-  <div class="vz-am__invitation__input">
-    <label>
-      Invitation Url'
-    </label>
-    <div class="invitation-url">
-      <input type="text" value="">
-      <button>Copy</button>
-    </div>
-  </div>
-  </article>
-  <?php
+  include 'invite_options.php';
 }
 
 add_action(
@@ -140,51 +95,7 @@ function vz_am_availability_options_content($post) {
 
 add_action('save_post', 'vz_am_save_calendar_options', 10, 2);
 function vz_am_save_calendar_options($post_id) {
-  if (get_post_type($post_id) !== 'vz-calendar') {
-    return;
-  }
-  if (array_key_exists('vz_am_rest', $_POST)) {
-    update_post_meta(
-      $post_id,
-      'vz_am_rest',
-      $_POST['vz_am_rest']
-    );
-  }
-  if (array_key_exists('vz_am_duration', $_POST)) {
-    update_post_meta(
-      $post_id,
-      'vz_am_duration',
-      $_POST['vz_am_duration']
-    );
-  }
-  if (array_key_exists('vz-meetings-availability-rules', $_POST)) {
-    update_post_meta(
-      $post_id,
-      'vz_availability_rules',
-      $_POST['vz-meetings-availability-rules']
-    );
-  }
-  if (array_key_exists('vz_am_maximum_days_in_advance', $_POST)) {
-    update_post_meta(
-      $post_id,
-      'vz_am_maximum_days_in_advance',
-      $_POST['vz_am_maximum_days_in_advance']
-    );
-  }
-  if (array_key_exists('vz_am_enabled', $_POST)) {
-    update_post_meta(
-      $post_id,
-      'vz_am_enabled',
-      $_POST['vz_am_enabled'] == "true"
-    );
-  }
-  if (array_key_exists('vz_am_requires_invite', $_POST)) {
-    update_post_meta(
-      $post_id,
-      'vz_am_requires_invite',
-      $_POST['vz_am_requires_invite'] == "true"
-    );
-  }
+  include 'save_post.php';
 }
 
 function vz_product_select_calendar_option($selected_calendar) {
@@ -350,14 +261,56 @@ function vz_am_meeting_sortable_columns_orderby($query) {
 add_action('vz_am_remove_old_invites', 'vz_am_remove_old_invites');
 function vz_am_remove_old_invites() {
   $invites = get_posts(array(
-    'post_type' => 'vz-am-invite',
+    'post_type' => 'vz-invite',
     'numberposts' => -1,
     'fields' => 'ids',
-    'date_query' => array(
-      'before' => '48 hours ago',
-    ),
+    'meta_query' => [
+      'key' => 'vz_am_expiration_date',
+      'compare' => '<',
+      'value' => date('Y-m-d'),
+      'type' => 'DATE',
+    ],
   ));
   foreach ($invites as $invite) {
-    wp_delete_post($invite, true);
+    wp_trash_post($invite);
   }
+}
+
+function vzm_update_fields($post_id, $fields) {
+  foreach ($fields as $field) :
+    if (array_key_exists($field, $_POST)) :
+      update_post_meta(
+        $post_id,
+        $field,
+        $_POST[$field]
+      );
+    endif;
+  endforeach;
+}
+
+
+function vz_use_invitation($invite_code, $meeting_id) {
+  $args = [
+    'post_type' => 'vz-invite',
+    'meta_key' => 'random_code',
+    'meta_value' => $invite_code,
+    'fields' => 'ids',
+  ];
+  $invite = get_posts($args);
+  $invite_id = $invite[0];
+  $uses = get_post_meta($invite_id, 'vz_am_number_of_uses', true);
+  $uses--;
+  update_post_meta($invite_id, 'vz_am_number_of_uses', $uses);
+  $meetings = get_post_meta($invite_id, 'vz_am_meetings', true);
+  if (!$meetings) {
+    $meetings = [];
+  }
+  $meetings[] = $meeting_id;
+  update_post_meta($invite_id, 'meetings', $meetings);
+}
+
+
+function vz_am_make_invite_link($calendar_id, $random_id) {
+  $calendar_link = get_the_permalink($calendar_id);
+  return $calendar_link . '?invite=' . $random_id;
 }

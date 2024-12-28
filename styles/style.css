@@ -1,108 +1,78 @@
-.vz-am__calendar-options {
+.vzm__calendar-options {
   display: flex;
   flex-flow: row wrap;
   gap: 1em;
-  margin-bottom: 2em; }
-  .vz-am__calendar-options header {
-    width: stretch; }
+  margin-bottom: 2em;
+}
+.vzm__calendar-options header {
+  width: stretch;
+}
 
-.vz-am__meeting-invitations {
-  margin-bottom: 2em; }
+.vzm__meeting-invitations {
+  margin-bottom: 2em;
+}
 
-.vz-am__calendar-option label {
+.vzm__calendar-option label {
   margin-bottom: 0.3em;
-  display: block; }
+  display: block;
+}
 
-.vz-am__invitations__list {
+.vzm__invitations__list {
   list-style: none;
   padding: 0;
   display: flex;
   flex-flow: column;
-  gap: 1em; }
+  gap: 1em;
+}
 
-.vz-am__invitation {
+.vzm__invitation {
   display: flex;
   flex-flow: row wrap;
-  gap: 1em; }
+  gap: 1em;
+}
 
-.vz-am__invitation__input {
+.vzm__invitation__input {
   display: flex;
   flex-flow: column;
   width: fit-content;
   align-items: left;
   gap: 0 0.5em;
-  justify-content: center; }
-  .vz-am__invitation__input input {
-    font-size: 1.2em;
-    padding: 0.2em;
-    border: 1px solid #ccc;
-    border-radius: 0.5em; }
-  .vz-am__invitation__input.number-of-uses input {
-    width: 3em; }
-  .vz-am__invitation__input .invitation-url {
-    display: flex;
-    flex-flow: row;
-    gap: 0.5em; }
-    .vz-am__invitation__input .invitation-url button {
-      font-size: 1em;
-      padding: 0.2em 0.6em;
-      border-radius: 0.5em;
-      background-color: #0be;
-      cursor: pointer;
-      border: none;
-      color: white; }
-  .vz-am__invitation__input.status input[type=checkbox] {
-    display: none; }
-  .vz-am__invitation__input.status span {
-    width: 3.2em;
-    height: 2em;
-    background-color: #ccc;
-    border-radius: 1.5em;
-    display: block;
-    text-indent: -999px;
-    overflow: hidden;
-    position: relative; }
-    .vz-am__invitation__input.status span:after {
-      content: "";
-      top: 50%;
-      left: 50%;
-      position: absolute;
-      display: block;
-      height: 1.5em;
-      width: 1.5em;
-      background-color: #fff;
-      border-radius: 50%;
-      transition: transform 0.3s;
-      transform: translate(-90%, -50%); }
-  .vz-am__invitation__input.status input[type="checkbox"]:checked + span {
-    background-color: #0be; }
-    .vz-am__invitation__input.status input[type="checkbox"]:checked + span:after {
-      transform: translate(-10%, -50%); }
-
-.vz-am__invitation__delete {
-  font-size: 1em;
+  justify-content: center;
+}
+.vzm__invitation__input input, .vzm__invitation__input select {
+  font-size: 1.2em;
+  padding: 0.2em;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+}
+.vzm__invitation__input select {
+  width: 16em;
+}
+.vzm__invitation__input.number-of-uses input {
+  width: 3em;
+}
+.vzm__invitation__input .invitation-url {
   display: flex;
-  text-indent: -9999px;
-  height: 2em;
-  width: 2em;
-  position: relative;
+  flex-flow: row;
+  gap: 0.5em;
+  text-align: right;
+}
+.vzm__invitation__input .invitation-url input {
+  text-align: right;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  justify-content: flex-end;
+  display: flex;
+}
+.vzm__invitation__input .invitation-url button {
+  font-size: 1em;
+  padding: 0.2em 0.6em;
+  border-radius: 0.5em;
+  background-color: #0be;
+  cursor: pointer;
   border: none;
-  background-color: transparent;
-  opacity: 0.5;
-  transition: opacity 0.3s;
-  cursor: pointer; }
-  .vz-am__invitation__delete:hover {
-    opacity: 1; }
-  .vz-am__invitation__delete:after {
-    content: "\2716";
-    position: absolute;
-    font-size: 1.5em;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: black;
-    display: block;
-    text-indent: 0; }
+  color: white;
+}
 
 /*# sourceMappingURL=style.css.map */
