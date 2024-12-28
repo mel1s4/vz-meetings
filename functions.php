@@ -26,7 +26,6 @@ include 'api_calls.php';
 include 'calendar-block/calendar-block.php';
 include 'enqueue_scripts.php';
 
-// create settings page with a single text input field
 add_action('admin_menu', 'vz_am_settings_page');
 function vz_am_settings_page() {
   add_menu_page(
@@ -104,9 +103,7 @@ function vz_product_select_calendar_option($selected_calendar) {
     'numberposts' => -1,
   ));
 ?>
-
 <p class="form-field vz_am_allow_multiple_meetings_field ">
-
   <label for="vz_am_allow_multiple_meetings">
     <?php e_vz('Calendar')  ?>
   </label>
@@ -122,22 +119,54 @@ function vz_product_select_calendar_option($selected_calendar) {
   <?php
 }
 
+
+add_action('woocommerce_product_options_general_product_data', 'vz_am_product_options');
+function vz_am_product_options() {
+  global $post;
+  $selected_calendar = get_post_meta($post->ID, 'vz_am_calendar', true);
+  vz_product_select_calendar_option($selected_calendar);
+
+  woocommerce_wp_text_input(array(
+    'id' => 'vz_am_number_of_uses',
+    'label' => __vzm('Number of uses'),
+    'type' => 'number',
+  ));
+
+  woocommerce_wp_checkbox(array(
+    'id' => 'vz_am_create_invite_one_at_a_time',
+    'label' => __vzm('One use at a time'),
+  ));
+  
+}
+add_action('woocommerce_process_product_meta', 'vz_am_save_product_options');
+
 function vz_am_save_product_options($post_id) {
-  $duration = $_POST['vz_am_duration'];
-  update_post_meta($post_id, 'vz_am_duration', $duration);
-  $allow_multiple_meetings = isset($_POST['vz_am_allow_multiple_meetings']) ? 'yes' : 'no';
-  update_post_meta($post_id, 'vz_am_allow_multiple_meetings', $allow_multiple_meetings);
-  $calendar = $_POST['vz_am_calendar'];
-  update_post_meta($post_id, 'vz_am_calendar', $calendar);
+  if (array_key_exists('vz_am_calendar', $_POST)) {
+    update_post_meta(
+      $post_id,
+      'vz_am_calendar',
+      $_POST['vz_am_calendar']
+    );
+  }
+  if (array_key_exists('vz_am_number_of_uses', $_POST)) {
+    update_post_meta(
+      $post_id,
+      'vz_am_number_of_uses',
+      $_POST['vz_am_number_of_uses']
+    );
+  }
+  if (array_key_exists('vz_am_create_invite_one_at_a_time', $_POST)) {
+    update_post_meta(
+      $post_id,
+      'vz_am_create_invite_one_at_a_time',
+      $_POST['vz_am_create_invite_one_at_a_time']
+    );
+  }
 }
 
-
-// add sortable column to meetings archive page for the calendar column
 add_filter('manage_vz-meeting_posts_columns', 'vz_am_meeting_columns');
 function vz_am_meeting_columns($columns) {
   $columns['vz_am_calendar'] = __vzm('Calendar');
-
-  // scheduled hour
   $columns['vz_am_date_time'] = __vzm('Date and Time');
   return $columns;
 }
@@ -149,16 +178,13 @@ function vz_am_meeting_column_content($column, $post_id) {
     echo get_the_title($calendar_id);
   }
   if ($column === 'vz_am_date_time') {
-    $date_time = get_post_meta($post_id, 'date_time', true); // this is a date object
-    // echo date_format( date($date_time), 'Y-m-d H:i:s');
+    $date_time = get_post_meta($post_id, 'date_time', true);
     echo date('D, M d, Y @H:i:s', strtotime($date_time));
-    // echo duration
     $duration = get_post_meta($post_id, 'duration', true);
     echo ' (' . $duration . ' ' . __vzm('minutes') . ')';
   }
 }
 
-// add calendar filter
 add_action('restrict_manage_posts', 'vz_am_meeting_filter');
 function vz_am_meeting_filter() {
   global $typenow;
@@ -193,7 +219,6 @@ function vz_am_meeting_filter() {
 }
 
 function vz_get_calendars() {
-  // make a custom sql query to the database to get all the calendars
   global $wpdb;
   $query = "SELECT ID, post_title FROM $wpdb->posts WHERE post_type = 'vz-calendar'";
   $calendars = $wpdb->get_results($query, ARRAY_A);
@@ -228,9 +253,6 @@ function vz_am_meeting_filter_query($query) {
   }
 }
 
-
-
-// make the column sortable
 add_filter('manage_edit-vz-meeting_sortable_columns', 'vz_am_meeting_sortable_columns');
 function vz_am_meeting_sortable_columns($columns) {
   $columns['vz_am_calendar'] = 'vz_am_calendar';
@@ -309,8 +331,64 @@ function vz_use_invitation($invite_code, $meeting_id) {
   update_post_meta($invite_id, 'meetings', $meetings);
 }
 
-
 function vz_am_make_invite_link($calendar_id, $random_id) {
   $calendar_link = get_the_permalink($calendar_id);
   return $calendar_link . '?invite=' . $random_id;
+}
+
+// check if woocommerce is active
+if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))) {
+  add_action('woocommerce_order_status_completed', 'vz_am_order_completed', 20, 2);
+  add_filter('woocommerce_account_menu_items', 'vz_am_my_account_menu_items');
+  add_action('init', 'vz_am_add_my_account_endpoints');
+  add_action('woocommerce_account_vz-invites_endpoint', 'vz_am_my_invites_endpoint');
+  add_action('woocommerce_account_vz-meetings_endpoint', 'vz_am_my_meetings_endpoint');
+
+}
+
+function vz_am_my_account_menu_items($items) {
+  $items['vz-invites'] = __vzm('My Invites');
+  $items['vz-meetings'] = __vzm('My Meetings');
+  return $items;
+}
+
+function vz_am_add_my_account_endpoints() {
+  add_rewrite_endpoint('vz-invites', EP_PAGES);
+  add_rewrite_endpoint('vz-meetings', EP_PAGES);
+}
+
+function vz_am_my_invites_endpoint() {
+  include 'my_invites.php';
+}
+
+function vz_am_my_meetings_endpoint() {
+  echo '<h1>' . __vzm('My Meetings') . '</h1>';
+}
+
+function vz_am_order_completed($order_id, $order) {
+  $items = $order->get_items();
+  foreach ($items as $item) {
+    $product_id = $item->get_product_id();
+    $product = wc_get_product($product_id);
+    $calendar_id = get_post_meta($product_id, 'vz_am_calendar', true);
+    $number_of_uses = get_post_meta($product_id, 'vz_am_number_of_uses', true);
+    $create_invite_one_at_a_time = get_post_meta($product_id, 'vz_am_create_invite_one_at_a_time', true);
+    $random_id = strtoupper(wp_generate_password(9, false));
+    $invite_id = wp_insert_post([
+      'post_type' => 'vz-invite',
+      'post_title' => 'Invite for ' . $product->get_title(),
+      'post_status' => 'publish',
+    ]);
+    update_post_meta($invite_id, 'calendar_id', $calendar_id);
+    update_post_meta($invite_id, 'vz_am_number_of_uses', $number_of_uses);
+    update_post_meta($invite_id, 'vz_am_create_invite_one_at_a_time', $create_invite_one_at_a_time);
+    update_post_meta($invite_id, 'random_code', $random_id);
+    update_post_meta($invite_id, 'vz_am_expiration_date', date('Y-m-d', strtotime('+30 days')));
+
+    $order_user = $order->get_user();
+    wp_update_post([
+      'ID' => $invite_id,
+      'post_author' => $order_user->ID,
+    ]);
+  }
 }
