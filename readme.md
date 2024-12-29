@@ -20,3 +20,8 @@ A group of creative people trying to make digital prescence easier for everyone.
 
 ## Follow our Updates
 <a href="https://viroz.studio/proyect/viroz-meetings/"> Click Here </a> to see the Plugin Page at <a href="https://viroz.studio/">our Website</a>
+
+
+# Commands
+## Run sass from the plugin folder:
+sass --watch styles:styles

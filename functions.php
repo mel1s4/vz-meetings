@@ -370,25 +370,23 @@ function vz_am_order_completed($order_id, $order) {
     $create_invite_one_at_a_time = get_post_meta($product_id, 'vz_am_create_invite_one_at_a_time', true);
     $order_user = $order->get_user();
     
-    $C = 0;
-    while ($C < $product_quantity) {
-      $C++;
-      $random_id = strtoupper(wp_generate_password(9, false));
-      $invite_id = wp_insert_post([
-        'post_type' => 'vz-invite',
-        'post_title' => 'Invite for ' . $product->get_title(),
-        'post_status' => 'publish',
-      ]);
-      update_post_meta($invite_id, 'calendar_id', $calendar_id);
-      update_post_meta($invite_id, 'vz_am_number_of_uses', $number_of_uses);
-      update_post_meta($invite_id, 'vz_am_create_invite_one_at_a_time', $create_invite_one_at_a_time);
-      update_post_meta($invite_id, 'random_code', $random_id);
-      update_post_meta($invite_id, 'vz_am_expiration_date', date('Y-m-d', strtotime('+30 days')));
+    $number_of_uses = $number_of_uses * $product_quantity;
+    $random_id = strtoupper(wp_generate_password(9, false));
+    $invite_id = wp_insert_post([
+      'post_type' => 'vz-invite',
+      'post_title' => 'Invite for ' . $product->get_title(),
+      'post_status' => 'publish',
+    ]);
+    update_post_meta($invite_id, 'calendar_id', $calendar_id);
+    update_post_meta($invite_id, 'vz_am_number_of_uses', $number_of_uses);
+    update_post_meta($invite_id, 'vz_am_create_invite_one_at_a_time', $create_invite_one_at_a_time);
+    update_post_meta($invite_id, 'random_code', $random_id);
+    update_post_meta($invite_id, 'vz_am_expiration_date', date('Y-m-d', strtotime('+30 days')));
 
-      wp_update_post([
-        'ID' => $invite_id,
-        'post_author' => $order_user->ID,
-      ]);
-    }
+    wp_update_post([
+      'ID' => $invite_id,
+      'post_author' => $order_user->ID,
+    ]);
+    
   }
 }

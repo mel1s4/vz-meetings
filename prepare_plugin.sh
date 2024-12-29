@@ -5,11 +5,14 @@ rm vz-meetings.zip
 # build and rename
 # cd availability-rules
 # sh build-and-rename.sh
+# echo "Availability Rules build and rename done"
 # cd ../calendar-view
 # sh build-and-rename.sh
+# echo "Calendar View build and rename done"
 # cd ../calendar-block
 # npm install
 # npm run build
+# echo "Calendar Block build done"
 # cd ../
 
 # create and copy components files
