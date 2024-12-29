@@ -5,9 +5,11 @@ This plugin will help you make calendars with custom avilability rules that will
 
 # To do
 [X] Multiple uses per invite
+[X] WooCommerce integration
 [ ] Invite meetings list
 [ ] Meeting, invite used
-[X] WooCommerce integration
+[ ] Translations for Visitor
+[ ] Translations for Admin
 [ ] Multiple users per service slot
 
 # After installations

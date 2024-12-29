@@ -169,7 +169,7 @@ function App() {
       if (enabled !== '')
         setCalendarEnabled(enabled !== '');
       if (requires_invite !== '')
-        setRequiresInvite(requires_invite !== '');
+        setRequiresInvite(requires_invite === 'true');
       if (calendar_id !== '')
         setCalendarId(calendar_id);
     }

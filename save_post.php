@@ -4,15 +4,15 @@ if (get_post_type($post_id) == 'vz-calendar') {
   vzm_update_fields($post_id, [
     'vz_am_rest',
     'vz_am_duration',
-    'vz_availability_rules',
     'vz_am_maximum_days_in_advance',
     'vz_am_enabled',
     'vz_am_requires_invite',
   ]);
+  $availability_rules = $_POST['vz-meetings-availability-rules'];
+  update_post_meta($post_id, 'vz_availability_rules', $availability_rules);
 }
 
 if (get_post_type($post_id) == 'vz-invite') {
-
   vzm_update_fields($post_id, [
     'vz_am_number_of_uses',
     'vz_am_expiration_date',

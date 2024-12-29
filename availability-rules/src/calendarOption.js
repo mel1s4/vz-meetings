@@ -42,23 +42,6 @@ function CalendarOptions ({
         <header className="vz-am__header">
           <h2>Calendar Options</h2>
         </header>
-        
-        <div className="vz-am__calendar-option">
-          <label>
-            Enable
-          </label>
-          <label className="vz-toggle-switch">
-            <input type="checkbox"
-                  onClick={e => setCalendarEnabled(e.target.checked)}
-                  defaultChecked={calendarEnabled} />
-               <span className={calendarEnabled ? '--active' : ''}>
-                Enable Calendar
-              </span>
-            <input type="hidden"
-                      name="vz_am_enabled" 
-                      value={calendarEnabled} />
-          </label>
-        </div>
 
         <div className="vz-am__calendar-option">
           <label>
