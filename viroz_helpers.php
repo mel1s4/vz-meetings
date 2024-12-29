@@ -16,7 +16,7 @@ if (!function_exists('vz_html')) {
 }
 
 if (!function_exists('e_vz'))  {
-  function e_vz($text) {
+  function e_vzm($text) {
     echo __vzm($text);
   }
 }

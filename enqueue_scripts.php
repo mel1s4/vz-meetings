@@ -34,6 +34,7 @@ function vz_am_enqueue_styles() {
 
 add_action('wp_enqueue_scripts', 'vz_am_enqueue_calendar_scripts');
 function vz_am_enqueue_calendar_scripts() {
+  wp_enqueue_style('vz-calendar-styles', plugin_dir_url(__FILE__) . 'styles/visitor.css'); 
   global $post;
   $id = $post->ID;
   // if is single vz-calendar post

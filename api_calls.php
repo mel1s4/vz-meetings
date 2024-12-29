@@ -135,7 +135,8 @@ function vz_am_confirm_meeting($request) {
     'date_time' => $selected_time_slot,
     'duration' => $duration,
     'user_id' => $user_id,
-    'calendar_id' => $calendar_id, 
+    'calendar_id' => $calendar_id,
+    'user_timezone' => $visitor_timezone,
   ];
   $new_meeting_id = wp_insert_post([
     'post_type' => 'vz-meeting',
